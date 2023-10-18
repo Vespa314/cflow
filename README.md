@@ -1,65 +1,10 @@
-# memos
+- 魔改版本memos，[视频介绍](https://www.bilibili.com/video/BV1Au4y147Nn/)
+- [官方仓库](https://github.com/usememos/memos)
 
-<img height="72px" src="https://usememos.com/logo.webp" alt="✍️ memos" align="right" />
+其中：
+- memos版本比较老，如果你的db在官方较新的镜像下使用过，可能无法直接迁移；（所以比较适合从零开始的用户）
+- 双链需要修改代码中webhook回调部分，然后部署个服务去修改DB（或者有会go的大佬可以直接不用webhook直接写db）
+- 卡片问答需要自己搭建gpt套壳应用，embedding相似度计算服务，例行计算embedding，后端接收请求返回给套壳应用（我比较菜，不知道怎么集成到一起），有能力的可以自己捣鼓，当前我的代码是纯定制的，还没达到开源水平；
+- 清空了所有commit（可能不太方便大家合官方代码），因为我自己开发时原本想着自用，所以commit里面写入了很多私密信息；
 
-A privacy-first, lightweight note-taking service. Easily capture and share your great thoughts.
-
-<a href="https://usememos.com/docs">Documentation</a> •
-<a href="https://demo.usememos.com/">Live Demo</a> •
-Discuss in <a href="https://discord.gg/tfPJa4UmAv">Discord</a> / <a href="https://t.me/+-_tNF1k70UU4ZTc9">Telegram</a>
-
-<p>
-  <a href="https://github.com/usememos/memos/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/usememos/memos?logo=github" /></a>
-  <a href="https://hub.docker.com/r/neosmemo/memos"><img alt="Docker pull" src="https://img.shields.io/docker/pulls/neosmemo/memos.svg"/></a>
-  <a href="https://discord.gg/tfPJa4UmAv"><img alt="Discord" src="https://img.shields.io/badge/discord-chat-5865f2?logo=discord&logoColor=f5f5f5" /></a>
-</p>
-
-![demo](https://usememos.com/demo.webp)
-
-## Key points
-
-- **Open source and free forever**. Embrace a future where creativity knows no boundaries with our open-source solution – free today, tomorrow, and always.
-- **Self-hosting with Docker in just seconds**. Enjoy the flexibility, scalability, and ease of setup that Docker provides, allowing you to have full control over your data and privacy.
-- **Pure text with added Markdown support.** Say goodbye to the overwhelming mental burden of rich formatting and embrace a minimalist approach.
-- **Customize and share your notes effortlessly**. With our intuitive sharing features, you can easily collaborate and distribute your notes with others.
-- **RESTful API for third-party services.** Embrace the power of integration and unleash new possibilities with our RESTful API support.
-
-## Deploy with Docker in seconds
-
-```bash
-docker run -d --name memos -p 5230:5230 -v ~/.memos/:/var/opt/memos ghcr.io/usememos/memos:latest
-```
-
-> The `~/.memos/` directory will be used as the data directory on your local machine, while `/var/opt/memos` is the directory of the volume in Docker and should not be modified.
-
-Learn more about [other installation methods](https://usememos.com/docs#installation).
-
-## Contribution
-
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. We greatly appreciate any contributions you make. Thank you for being a part of our community! 🥰
-
-<a href="https://github.com/usememos/memos/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=usememos/memos" />
-</a>
-
----
-
-- [Moe Memos](https://memos.moe/) - Third party client for iOS and Android
-- [lmm214/memos-bber](https://github.com/lmm214/memos-bber) - Chrome extension
-- [Rabithua/memos_wmp](https://github.com/Rabithua/memos_wmp) - WeChat MiniProgram
-- [qazxcdswe123/telegramMemoBot](https://github.com/qazxcdswe123/telegramMemoBot) - Telegram bot
-- [eallion/memos.top](https://github.com/eallion/memos.top) - Static page rendered with the Memos API
-- [eindex/logseq-memos-sync](https://github.com/EINDEX/logseq-memos-sync) - Logseq plugin
-- [JakeLaoyu/memos-import-from-flomo](https://github.com/JakeLaoyu/memos-import-from-flomo) - Import data. Support from flomo, wechat reading
-- [Send to memos](https://sharecuts.cn/shortcut/12640) - A shortcut for iOS
-- [Memos Raycast Extension](https://www.raycast.com/JakeYu/memos) - Raycast extension
-- [Memos Desktop](https://github.com/xudaolong/memos-desktop) - Third party client for MacOS and Windows
-- [MemosGallery](https://github.com/BarryYangi/MemosGallery) - A static Gallery rendered with the Memos API
-
-## Acknowledgements
-
-- Thanks [Uffizzi](https://www.uffizzi.com/) for sponsoring preview environments for PRs.
-
-## Star history
-
-[![Star History Chart](https://api.star-history.com/svg?repos=usememos/memos&type=Date)](https://star-history.com/#usememos/memos&Date)
+视频中提到其他功能可以在这个版本中体验到，有需要的也可以从里面自行扣代码合到自己的版本中；
