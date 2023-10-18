@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package memos.api.v2;
+
+import "api/v2/common.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gen/api/v2";
+
+service UserService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {get: "/api/v2/users/{username}"};
+    option (google.api.method_signature) = "username";
+  }
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/users/{username}"
+      body: "*"
+    };
+    option (google.api.method_signature) = "username";
+  }
+  // ListUserAccessTokens returns a list of access tokens for a user.
+  rpc ListUserAccessTokens(ListUserAccessTokensRequest) returns (ListUserAccessTokensResponse) {
+    option (google.api.http) = {get: "/api/v2/users/{username}/access_tokens"};
+    option (google.api.method_signature) = "username";
+  }
+  // CreateUserAccessToken creates a new access token for a user.
+  rpc CreateUserAccessToken(CreateUserAccessTokenRequest) returns (CreateUserAccessTokenResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/users/{username}/access_tokens"
+      body: "*"
+    };
+    option (google.api.method_signature) = "username";
+  }
+  // DeleteUserAccessToken deletes an access token for a user.
+  rpc DeleteUserAccessToken(DeleteUserAccessTokenRequest) returns (DeleteUserAccessTokenResponse) {
+    option (google.api.http) = {delete: "/api/v2/users/{username}/access_tokens/{access_token}"};
+    option (google.api.method_signature) = "username,access_token";
+  }
+}
+
+message User {
+  int32 id = 1;
+
+  string username = 2;
+
+  enum Role {
+    ROLE_UNSPECIFIED = 0;
+    HOST = 1;
+    ADMIN = 2;
+    USER = 3;
+  }
+  Role role = 3;
+
+  string email = 4;
+
+  string nickname = 5;
+
+  string avatar_url = 6;
+
+  string password = 7 [(google.api.field_behavior) = INPUT_ONLY];
+
+  RowStatus row_status = 8;
+
+  google.protobuf.Timestamp create_time = 9;
+
+  google.protobuf.Timestamp update_time = 10;
+}
+
+message GetUserRequest {
+  string username = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message UpdateUserRequest {
+  string username = 1;
+
+  User user = 2;
+
+  // The update mask applies to the user resource.
+  repeated string update_mask = 3;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message ListUserAccessTokensRequest {
+  string username = 1;
+}
+
+message ListUserAccessTokensResponse {
+  repeated UserAccessToken access_tokens = 1;
+}
+
+message CreateUserAccessTokenRequest {
+  string username = 1;
+
+  string description = 2;
+
+  optional google.protobuf.Timestamp expires_at = 3;
+}
+
+message CreateUserAccessTokenResponse {
+  UserAccessToken access_token = 1;
+}
+
+message DeleteUserAccessTokenRequest {
+  string username = 1;
+  // access_token is the access token to delete.
+  string access_token = 2;
+}
+
+message DeleteUserAccessTokenResponse {}
+
+message UserAccessToken {
+  string access_token = 1;
+  string description = 2;
+  google.protobuf.Timestamp issued_at = 3;
+  google.protobuf.Timestamp expires_at = 4;
+}

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/logo.webp" type="image/*" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f4f5" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#27272a" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Memos</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      var global = global || window;
+      window.addEventListener("load", () => {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("/sw.js");
+        }
+      });
+    </script>
+  </body>
+</html>

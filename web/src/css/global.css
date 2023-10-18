@@ -1,0 +1,8 @@
+html,
+body {
+  @apply text-base w-full h-full overflow-hidden dark:bg-zinc-800;
+}
+
+#root {
+  @apply w-full h-full overflow-auto;
+}
