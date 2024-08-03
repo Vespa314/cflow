@@ -73,6 +73,17 @@ if (!$?) {
     Write-Host "Frontend built!" -f green
 }
 
+Write-Host "`nGenerating buf types..." -f DarkYellow
+$frontendTime = Measure-Command {
+    &pnpm type-gen | Out-Host
+}
+if (!$?) {
+    Write-Host -BackgroundColor red -ForegroundColor white "Could not generate buf types. See above."
+    Exit 1
+} else {
+    Write-Host "buf types generated!" -f green
+}
+
 Write-Host "`nBacking up frontend placeholder..." -f Magenta
 Move-Item "$repoRoot/server/dist" "$repoRoot/server/dist.bak" -Force -ErrorAction Stop
 if (!$?) {
@@ -103,7 +114,7 @@ $backendTime = Measure-Command {
         }
 
         Write-Host "Building $os/$arch to $output..." -f Blue
-        &go build -trimpath -o $output -ldflags="$($ldFlags -join " ")" ./main.go | Out-Host
+        &go build -trimpath -o $output -ldflags="$($ldFlags -join " ")" ./bin/memos/main.go | Out-Host
         if (!$?) {
             Write-Host -BackgroundColor red -ForegroundColor white "'go build' failed for $build ($outputBinary)!. See above."
             continue

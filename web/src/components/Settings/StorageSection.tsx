@@ -7,7 +7,6 @@ import { useTranslate } from "@/utils/i18n";
 import showCreateStorageServiceDialog from "../CreateStorageServiceDialog";
 import { showCommonDialog } from "../Dialog/CommonDialog";
 import Icon from "../Icon";
-import LearnMore from "../LearnMore";
 import showUpdateLocalStorageDialog from "../UpdateLocalStorageDialog";
 import Dropdown from "../kit/Dropdown";
 
@@ -32,7 +31,11 @@ const StorageSection = () => {
       name: "storage-service-id",
       value: JSON.stringify(storageId),
     });
-    await globalStore.fetchSystemStatus();
+    try {
+      await globalStore.fetchSystemStatus();
+    } catch (error: any) {
+      console.error(error);
+    }
     setStorageServiceId(storageId);
   };
 
@@ -40,7 +43,7 @@ const StorageSection = () => {
     showCommonDialog({
       title: t("setting.storage-section.delete-storage"),
       content: t("setting.storage-section.warning-text", { name: storage.name }),
-      style: "warning",
+      style: "danger",
       dialogName: "delete-storage-dialog",
       onConfirm: async () => {
         try {
@@ -66,21 +69,22 @@ const StorageSection = () => {
           handleActiveStorageServiceChanged(Number(event.target.value));
         }}
       >
-        <div className="w-full flex flex-row justify-start items-center gap-x-2">
+        <Radio value={"0"} label={t("setting.storage-section.type-database")} />
+        <div className="w-full mt-2 flex flex-row justify-start items-center gap-x-2">
           <Radio value={"-1"} label={t("setting.storage-section.type-local")} />
           <IconButton size="sm" onClick={() => showUpdateLocalStorageDialog(systemStatus.localStoragePath)}>
             <Icon.PenBox className="w-4 h-auto" />
           </IconButton>
         </div>
-        <Radio value={"0"} label={t("setting.storage-section.type-database")} />
         {storageList.map((storage) => (
           <Radio key={storage.id} value={storage.id} label={storage.name} />
         ))}
       </RadioGroup>
       <Divider className="!my-4" />
-      <div className="mb-2 w-full flex flex-row justify-start items-center gap-1">
-        <span className="font-mono text-sm text-gray-400">{t("setting.storage-section.storage-services-list")}</span>
-        <LearnMore url="https://usememos.com/docs/storage" />
+      <div className="mb-2 w-full flex flex-row justify-between items-center gap-1">
+        <div className="flex items-center gap-1">
+          <span className="font-mono text-sm text-gray-400">{t("setting.storage-section.storage-services")}</span>
+        </div>
         <button className="btn-normal px-2 py-0 ml-1" onClick={() => showCreateStorageServiceDialog(undefined, fetchStorageList)}>
           {t("common.create")}
         </button>
@@ -117,6 +121,11 @@ const StorageSection = () => {
             </div>
           </div>
         ))}
+        {storageList.length === 0 && (
+          <div className="pb-2 w-full text-sm dark:border-zinc-700 opacity-60 flex flex-row items-center justify-between">
+            <p className="">No storage service found.</p>
+          </div>
+        )}
       </div>
     </div>
   );

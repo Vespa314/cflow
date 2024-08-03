@@ -5,6 +5,7 @@ type Visibility = "PUBLIC" | "PROTECTED" | "PRIVATE";
 interface Memo {
   id: MemoId;
 
+  creatorId: number;
   creatorUsername: string;
   createdTs: number;
   updatedTs: number;
@@ -18,6 +19,7 @@ interface Memo {
   creatorName: string;
   resourceList: any[];
   relationList: MemoRelation[];
+  parent?: Memo;
 }
 
 interface MemoCreate {
@@ -25,6 +27,11 @@ interface MemoCreate {
   resourceIdList: ResourceId[];
   relationList: MemoRelationUpsert[];
   visibility?: Visibility;
+}
+
+interface TagSuggestion {
+  content: string;
+  version: number;
 }
 
 interface MemoPatch {

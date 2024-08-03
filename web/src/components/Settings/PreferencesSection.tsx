@@ -1,65 +1,141 @@
-import { Button, Divider, Input, Option, Select, Switch } from "@mui/joy";
-import React, { useState } from "react";
-import { toast } from "react-hot-toast";
+import { Divider, Option, Select, Switch } from "@mui/joy";
+import React from "react";
 import { VISIBILITY_SELECTOR_ITEMS } from "@/helpers/consts";
-import { useGlobalStore, useUserStore } from "@/store/module";
+import { useGlobalStore } from "@/store/module";
+import { useUserV1Store } from "@/store/v1";
+import { UserSetting } from "@/types/proto/api/v2/user_service";
 import { useTranslate } from "@/utils/i18n";
 import AppearanceSelect from "../AppearanceSelect";
-import LearnMore from "../LearnMore";
 import LocaleSelect from "../LocaleSelect";
+import VisibilityIcon from "../VisibilityIcon";
 import "@/less/settings/preferences-section.less";
+
 
 const PreferencesSection = () => {
   const t = useTranslate();
   const globalStore = useGlobalStore();
-  const userStore = useUserStore();
+  const userV1Store = useUserV1Store();
   const { appearance, locale } = globalStore.state;
-  const { setting, localSetting } = userStore.state.user as User;
-  const [telegramUserId, setTelegramUserId] = useState<string>(setting.telegramUserId);
-  const visibilitySelectorItems = VISIBILITY_SELECTOR_ITEMS.map((item) => {
-    return {
-      value: item.value,
-      text: t(`memo.visibility.${item.text.toLowerCase() as Lowercase<typeof item.text>}`),
-    };
-  });
-
-  const dailyReviewTimeOffsetOptions: number[] = [...Array(24).keys()];
+  const setting = userV1Store.userSetting as UserSetting;
 
   const handleLocaleSelectChange = async (locale: Locale) => {
-    await userStore.upsertUserSetting("locale", locale);
+    await userV1Store.updateUserSetting(
+      {
+        locale,
+      },
+      ["locale"]
+    );
     globalStore.setLocale(locale);
   };
 
   const handleAppearanceSelectChange = async (appearance: Appearance) => {
-    await userStore.upsertUserSetting("appearance", appearance);
+    await userV1Store.updateUserSetting(
+      {
+        appearance,
+      },
+      ["appearance"]
+    );
     globalStore.setAppearance(appearance);
   };
 
   const handleDefaultMemoVisibilityChanged = async (value: string) => {
-    await userStore.upsertUserSetting("memo-visibility", value);
+    await userV1Store.updateUserSetting(
+      {
+        memoVisibility: value,
+      },
+      ["memo_visibility"]
+    );
   };
 
-  const handleDoubleClickEnabledChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
-    userStore.upsertLocalSetting({ ...localSetting, enableDoubleClickEditing: event.target.checked });
+  const handleShowWordCntChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        showWordCnt: event.target.checked,
+      },
+      ["show_word_cnt"]
+    );
   };
 
-  const handleDailyReviewTimeOffsetChanged = (value: number) => {
-    userStore.upsertLocalSetting({ ...localSetting, dailyReviewTimeOffset: value });
+  const handleRefPreviewChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        refPreview: event.target.checked,
+      },
+      ["ref_preview"]
+    );
   };
 
-  const handleSaveTelegramUserId = async () => {
-    try {
-      await userStore.upsertUserSetting("telegram-user-id", telegramUserId);
-      toast.success(t("common.dialog.success"));
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.response.data.message);
-    }
+  const handleShowTodoPageChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        showTodoPage: event.target.checked,
+      },
+      ["show_todo_page"]
+    );
   };
 
-  const handleTelegramUserIdChanged = async (value: string) => {
-    setTelegramUserId(value);
+  const handleShowArchiveChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        showArchivePage: event.target.checked,
+      },
+      ["show_archive_page"]
+    );
   };
+
+  const handleMarkWithTagChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        markWithTag: event.target.checked,
+      },
+      ["mark_with_tag"]
+    );
+  };
+
+  const handleShowTagSelectorChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        showTagSelector: event.target.checked,
+      },
+      ["show_tag_selector"]
+    );
+  }
+
+  const handleShowMemoPublicChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        showMemoPublic: event.target.checked,
+      },
+      ["show_memo_public"]
+    );
+  }
+
+  const handlePasteRenameChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        pasteRename: event.target.checked,
+      },
+      ["paste_rename"]
+    );
+  }
+
+  const handleDoubleClickEditChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        doubleClickEdit: event.target.checked,
+      },
+      ["double_click_edit"]
+    );
+  }
+
+  const handleUseExcalidrawChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        useExcalidraw: event.target.checked,
+      },
+      ["use_excalidraw"]
+    );
+  }
 
   return (
     <div className="section-container preferences-section-container">
@@ -72,77 +148,75 @@ const PreferencesSection = () => {
         <span className="text-sm">{t("setting.preference-section.theme")}</span>
         <AppearanceSelect value={appearance} onChange={handleAppearanceSelectChange} />
       </div>
-      <p className="title-text">{t("setting.preference")}</p>
+      <Divider className="!mt-3" />
+      <p className="title-text flex !mb-0 flex-row items-center">{t("setting.preference")}</p>
       <div className="form-label selector">
         <span className="text-sm break-keep text-ellipsis overflow-hidden">{t("setting.preference-section.default-memo-visibility")}</span>
         <Select
           className="!min-w-fit"
           value={setting.memoVisibility}
+          startDecorator={<VisibilityIcon visibility={setting.memoVisibility as Visibility} />}
           onChange={(_, visibility) => {
             if (visibility) {
               handleDefaultMemoVisibilityChanged(visibility);
             }
           }}
         >
-          {visibilitySelectorItems.map((item) => (
-            <Option key={item.value} value={item.value}>
-              {item.text}
+          {VISIBILITY_SELECTOR_ITEMS.map((item) => (
+            <Option key={item} value={item} className="whitespace-nowrap">
+              {t(`memo.visibility.${item.toLowerCase() as Lowercase<typeof item>}`)}
             </Option>
           ))}
         </Select>
       </div>
-      <div className="form-label selector">
-        <span className="text-sm break-keep text-ellipsis overflow-hidden">{t("setting.preference-section.daily-review-time-offset")}</span>
-        <span className="w-auto inline-flex">
-          <Select
-            placeholder="hh"
-            className="!min-w-fit"
-            value={localSetting.dailyReviewTimeOffset}
-            onChange={(_, value) => {
-              if (value !== null) {
-                handleDailyReviewTimeOffsetChanged(value);
-              }
-            }}
-            slotProps={{
-              listbox: {
-                sx: {
-                  maxHeight: "15rem",
-                  overflow: "auto",
-                },
-              },
-            }}
-          >
-            {dailyReviewTimeOffsetOptions.map((item) => (
-              <Option key={item} value={item} className="whitespace-nowrap">
-                {item.toString().padStart(2, "0")}
-              </Option>
-            ))}
-          </Select>
-        </span>
-      </div>
-
+      <p className="title-text !mb-0 flex flex-row items-center">编辑器</p>
       <label className="form-label selector">
-        <span className="text-sm break-keep">{t("setting.preference-section.enable-double-click")}</span>
-        <Switch className="ml-2" checked={localSetting.enableDoubleClickEditing} onChange={handleDoubleClickEnabledChanged} />
-      </label>
-      {/* <Divider className="!mt-3 !my-4" />
-      <div className="mb-2 w-full flex flex-row justify-between items-center">
-        <div className="w-auto flex items-center">
-          <span className="text-sm mr-1">{t("setting.preference-section.telegram-user-id")}</span>
-          <LearnMore url="https://usememos.com/docs/integration/telegram-bot" />
+        <div className="flex flex-row items-center">
+          <span className="text-sm break-keep mr-1">显示字数</span>
         </div>
-        <Button onClick={handleSaveTelegramUserId}>{t("common.save")}</Button>
-      </div>
-      <Input
-        className="w-full"
-        sx={{
-          fontFamily: "monospace",
-          fontSize: "14px",
-        }}
-        value={telegramUserId}
-        onChange={(event) => handleTelegramUserIdChanged(event.target.value)}
-        placeholder={t("setting.preference-section.telegram-user-id-placeholder")}
-      /> */}
+        <Switch className="ml-2" checked={setting.showWordCnt} onChange={handleShowWordCntChanged} />
+      </label>
+      <label className="form-label selector">
+        <span className="text-sm break-keep">引用时附带tag</span>
+        <Switch className="ml-2" checked={setting.markWithTag} onChange={handleMarkWithTagChanged} />
+      </label>
+      <label className="form-label selector">
+        <span className="text-sm break-keep">显示标签选择器</span>
+        <Switch className="ml-2" checked={setting.showTagSelector} onChange={handleShowTagSelectorChanged} />
+      </label>
+      <label className="form-label selector">
+        <span className="text-sm break-keep">显示卡片公开入口</span>
+        <Switch className="ml-2" checked={setting.showMemoPublic} onChange={handleShowMemoPublicChanged} />
+      </label>
+      <label className="form-label selector">
+        <div className="flex flex-row items-center">
+          <span className="text-sm break-keep mr-1">截图重命名</span>
+        </div>
+        <Switch className="ml-2" checked={setting.pasteRename} onChange={handlePasteRenameChanged} />
+      </label>
+      <label className="form-label selector">
+        <span className="text-sm break-keep">双击编辑</span>
+        <Switch className="ml-2" checked={setting.doubleClickEdit} onChange={handleDoubleClickEditChanged} />
+      </label>
+      <label className="form-label selector">
+        <span className="text-sm break-keep">使用Excalidraw</span>
+        <Switch className="ml-2" checked={setting.useExcalidraw} onChange={handleUseExcalidrawChanged} />
+      </label>
+      <p className="title-text !mb-0 flex flex-row items-center">页面入口显示</p>
+      <Divider className="" />
+      <label className="form-label selector">
+        <span className="text-sm break-keep">卡片引用预览</span>
+        <Switch className="ml-2" checked={setting.refPreview} onChange={handleRefPreviewChanged} />
+      </label>
+      <label className="form-label selector">
+        <span className="text-sm break-keep">TODO</span>
+        <Switch className="ml-2" checked={setting.showTodoPage} onChange={handleShowTodoPageChanged} />
+      </label>
+      <label className="form-label selector">
+        <span className="text-sm break-keep">归档</span>
+        <Switch className="ml-2" checked={setting.showArchivePage} onChange={handleShowArchiveChanged} />
+      </label>
+      <Divider className="!my-4" />
     </div>
   );
 };

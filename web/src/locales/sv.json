@@ -3,10 +3,6 @@
     "about": "Om",
     "email": "E-post",
     "password": "Lösenord",
-    "repeat-password-short": "Upprepa",
-    "repeat-password": "Uprepa lösenordet",
-    "new-password": "Nytt lösenord",
-    "repeat-new-password": "Upprepa det nya lösenordet",
     "username": "Användarnamn",
     "nickname": "Smeknamn",
     "save": "Spara",
@@ -32,15 +28,12 @@
     "sign-in": "Logga in",
     "sign-up": "Bli medlem",
     "sign-out": "Logga ut",
-    "back-to-home": "Tillbaka hem",
     "type": "Typ",
     "title": "Titel",
     "filter": "Filter",
     "tags": "Taggar",
     "yourself": "Själv",
-    "archived-at": "Arkiverad på",
     "changed": "Ändrad",
-    "update-on": "Uppdatering på",
     "fold": "Vik ihop",
     "expand": "Expandera",
     "image": "Bild",
@@ -52,36 +45,18 @@
     "mark": "Mark"
   },
   "auth": {
-    "signup-as-host": "Registera dig som värd",
-    "host-tip": "Du registerar dig som webbplatsvärd.",
-    "not-host-tip": "Om du inte har ett konto, kontakta webbplatsens värd."
-  },
-  "sidebar": {
-    "daily-review": "Daglig återblick",
-    "resources": "Resurser",
-    "setting": "Inställningar",
-    "archived": "Arkiverade"
+    "host-tip": "Du registerar dig som webbplatsvärd."
   },
   "resource": {
-    "description": "Visa dina statiska resurser i anteckningarn. t.ex bilder.",
     "no-resources": "Inga resurser.",
     "fetching-data": "hämtar data...",
-    "upload": "Ladda upp",
-    "preview": "Förhandsvisa",
     "copy-link": "Kopiera länk",
     "delete-resource": "Ta bort resurs",
     "warning-text": "Är du säker på att du vill ta bort den här resursen? DENNA ÅTGÄRD ÄR OÅTERSTÄLLBAR❗",
     "linked-amount": "Länkat antecknings belopp",
-    "rename": "Döp om",
     "warning-text-unused": "Är du säker på att du vill ta bort denna oanvända resurs? DENNA ÅTGÄRD ÄR OÅTERSTÄLLBAR❗",
     "no-unused-resources": "Inga oanvända resurser",
-    "name": "Name",
     "clear": "Rensa"
-  },
-  "archived": {
-    "archived-memos": "Arkiverade anteckningar",
-    "no-archived-memos": "Inga arkiverade anteckningar.",
-    "fetching-data": "hämtar data..."
   },
   "editor": {
     "editing": "Redigerar...",
@@ -95,7 +70,6 @@
   },
   "memo": {
     "view-detail": "Visa detaljer",
-    "copy": "Kopiera",
     "copy-link": "Kopiera länk",
     "visibility": {
       "private": "Endast synlig för dig",
@@ -104,38 +78,8 @@
       "disabled": "Offentliga anteckningar är inaktiverade"
     }
   },
-  "memo-list": {
-    "fetching-data": "hämtar data...",
-    "fetch-more": "Klicka här för att hämta mer"
-  },
-  "filter": {
-    "new-filter": "Nytt filter",
-    "type": {
-      "tag": "Tag",
-      "type": "Type",
-      "text": "Text",
-      "display-time": "Display Time",
-      "visibility": "Visibility"
-    },
-    "operator": {
-      "contains": "Innehåller",
-      "not-contains": "Innehåller inte",
-      "is": "Är",
-      "is-not": "Är inte",
-      "before": "Innan",
-      "after": "Efter"
-    },
-    "value": {
-      "not-tagged": "Inga taggar",
-      "linked": "Har länkar"
-    },
-    "text-placeholder": "Börjar med ^ för att använda regex"
-  },
   "tag-list": {
     "tip-text": "Ange `#tag ` för att skapa"
-  },
-  "search": {
-    "quickly-filter": "Filtrera snabbt"
   },
   "setting": {
     "my-account": "Mitt konto",
@@ -186,7 +130,7 @@
     },
     "storage-section": {
       "create-a-service": "Skapa en tjänst",
-      "storage-services-list": "Lista över lagringstjänster",
+      "storage-services": "Lista över lagringstjänster",
       "update-a-service": "Uppdatera en tjänst",
       "warning-text": "Är du säker på att ta bort den här lagringstjänsten? DEN HÄR ÅTGÄRDEN ÄR IRREVERSIBEL❗",
       "delete-storage": "Ta bort lagring"
@@ -196,14 +140,9 @@
   },
   "amount-text": {
     "memo_one": "ANTECKNING",
-    "memo_other": "ANTECKNINGAR",
-    "tag_one": "TAGG",
-    "tag_other": "TAGGAR",
-    "day_one": "DAG",
-    "day_other": "DAGAR"
+    "memo_other": "ANTECKNINGAR"
   },
   "message": {
-    "no-memos": "inga anteckningar 🌃",
     "memos-ready": "alla anteckningar är redo 🎉",
     "restored-successfully": "Återställdes framgångsrikt",
     "memo-updated-datetime": "Anteckning skapad datum och tid ändrad",
@@ -229,10 +168,6 @@
     "click-to-save-the-image": "Klicka för att spara bilden",
     "generating-the-screenshot": "Genererar skärmdumpen...",
     "count-selected-resources": "Totalt valt",
-    "too-short": "För kort",
-    "too-long": "För långt",
-    "not-allow-space": "Tillåt inte mellanslag",
-    "not-allow-chinese": "Tillåt inte kinesiska",
     "succeed-vacuum-database": "Succeed to vacuum database",
     "succeed-update-additional-style": "Ytterligare stil uppdaterades framgångsrikt.",
     "succeed-copy-resource-link": "Resurslänk kopierades framgångsrikt.",
@@ -243,19 +178,12 @@
     "page-not-found": "404 - Sidan hittades inte 😥"
   },
   "days": {
-    "monday": "Måndag",
     "mon": "Mån",
-    "tuesday": "Tisdag",
     "tue": "Tis",
-    "wednesday": "Onsdag",
     "wed": "Ons",
-    "thursday": "Torsdag",
     "thu": "Tors",
-    "friday": "Fredag",
     "fri": "Fre",
-    "saturday": "Lördag",
     "sat": "Lör",
-    "sunday": "Söndag",
     "sun": "Sön"
   }
 }

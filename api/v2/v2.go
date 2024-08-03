@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
@@ -17,6 +17,16 @@ import (
 )
 
 type APIV2Service struct {
+	apiv2pb.UnimplementedSystemServiceServer
+	apiv2pb.UnimplementedAuthServiceServer
+	apiv2pb.UnimplementedUserServiceServer
+	apiv2pb.UnimplementedMemoServiceServer
+	apiv2pb.UnimplementedResourceServiceServer
+	apiv2pb.UnimplementedTagServiceServer
+	apiv2pb.UnimplementedInboxServiceServer
+	apiv2pb.UnimplementedActivityServiceServer
+	apiv2pb.UnimplementedWebhookServiceServer
+
 	Secret  string
 	Profile *profile.Profile
 	Store   *store.Store
@@ -33,20 +43,26 @@ func NewAPIV2Service(secret string, profile *profile.Profile, store *store.Store
 			authProvider.AuthenticationInterceptor,
 		),
 	)
-	apiv2pb.RegisterSystemServiceServer(grpcServer, NewSystemService(profile, store))
-	apiv2pb.RegisterUserServiceServer(grpcServer, NewUserService(store, secret))
-	apiv2pb.RegisterMemoServiceServer(grpcServer, NewMemoService(store))
-	apiv2pb.RegisterTagServiceServer(grpcServer, NewTagService(store))
-	apiv2pb.RegisterResourceServiceServer(grpcServer, NewResourceService(store))
-	reflection.Register(grpcServer)
-
-	return &APIV2Service{
+	apiv2Service := &APIV2Service{
 		Secret:         secret,
 		Profile:        profile,
 		Store:          store,
 		grpcServer:     grpcServer,
 		grpcServerPort: grpcServerPort,
 	}
+
+	apiv2pb.RegisterSystemServiceServer(grpcServer, apiv2Service)
+	apiv2pb.RegisterAuthServiceServer(grpcServer, apiv2Service)
+	apiv2pb.RegisterUserServiceServer(grpcServer, apiv2Service)
+	apiv2pb.RegisterMemoServiceServer(grpcServer, apiv2Service)
+	apiv2pb.RegisterTagServiceServer(grpcServer, apiv2Service)
+	apiv2pb.RegisterResourceServiceServer(grpcServer, apiv2Service)
+	apiv2pb.RegisterInboxServiceServer(grpcServer, apiv2Service)
+	apiv2pb.RegisterActivityServiceServer(grpcServer, apiv2Service)
+	apiv2pb.RegisterWebhookServiceServer(grpcServer, apiv2Service)
+	reflection.Register(grpcServer)
+
+	return apiv2Service
 }
 
 func (s *APIV2Service) GetGRPCServer() *grpc.Server {
@@ -66,8 +82,11 @@ func (s *APIV2Service) RegisterGateway(ctx context.Context, e *echo.Echo) error 
 		return err
 	}
 
-	gwMux := grpcRuntime.NewServeMux()
+	gwMux := runtime.NewServeMux()
 	if err := apiv2pb.RegisterSystemServiceHandler(context.Background(), gwMux, conn); err != nil {
+		return err
+	}
+	if err := apiv2pb.RegisterAuthServiceHandler(context.Background(), gwMux, conn); err != nil {
 		return err
 	}
 	if err := apiv2pb.RegisterUserServiceHandler(context.Background(), gwMux, conn); err != nil {
@@ -80,6 +99,15 @@ func (s *APIV2Service) RegisterGateway(ctx context.Context, e *echo.Echo) error 
 		return err
 	}
 	if err := apiv2pb.RegisterResourceServiceHandler(context.Background(), gwMux, conn); err != nil {
+		return err
+	}
+	if err := apiv2pb.RegisterInboxServiceHandler(context.Background(), gwMux, conn); err != nil {
+		return err
+	}
+	if err := apiv2pb.RegisterActivityServiceHandler(context.Background(), gwMux, conn); err != nil {
+		return err
+	}
+	if err := apiv2pb.RegisterWebhookServiceHandler(context.Background(), gwMux, conn); err != nil {
 		return err
 	}
 	e.Any("/api/v2/*", echo.WrapHandler(gwMux))

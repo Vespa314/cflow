@@ -1,26 +1,44 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { uniqBy } from "lodash-es";
 
+export type LoadingStatus = "incomplete" | "fetching" | "complete";
+
 interface State {
+  loadingStatus: LoadingStatus;
   memos: Memo[];
+  commentCounts: Record<string, number>;
 }
 
 const memoSlice = createSlice({
   name: "memo",
   initialState: {
+    loadingStatus: "incomplete",
     memos: [],
+    commentCounts: {},
   } as State,
   reducers: {
+    updateLoadingStatus: (state, action: PayloadAction<LoadingStatus>) => {
+      return {
+        ...state,
+        loadingStatus: action.payload,
+      };
+    },
     upsertMemos: (state, action: PayloadAction<Memo[]>) => {
       return {
         ...state,
-        memos: uniqBy([...state.memos, ...action.payload], "id"),
+        memos: uniqBy([...action.payload, ...state.memos], "id"),
       };
     },
     createMemo: (state, action: PayloadAction<Memo>) => {
       return {
         ...state,
         memos: state.memos.concat(action.payload),
+      };
+    },
+    setCommentCnt: (state, action: PayloadAction<Record<string, number>>) => {
+      return {
+        ...state,
+        commentCounts: action.payload,
       };
     },
     patchMemo: (state, action: PayloadAction<Partial<Memo>>) => {
@@ -51,6 +69,6 @@ const memoSlice = createSlice({
   },
 });
 
-export const { upsertMemos, createMemo, patchMemo, deleteMemo } = memoSlice.actions;
+export const { updateLoadingStatus, upsertMemos, createMemo, patchMemo, deleteMemo, setCommentCnt } = memoSlice.actions;
 
 export default memoSlice.reducer;

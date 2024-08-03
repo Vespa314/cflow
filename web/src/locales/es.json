@@ -3,10 +3,6 @@
     "about": "Acerca de",
     "email": "Email",
     "password": "Contraseña",
-    "repeat-password-short": "Repetir",
-    "repeat-password": "Repetir la contraseña",
-    "new-password": "Nueva contraseña",
-    "repeat-new-password": "Repetir la nueva contraseña",
     "username": "Usuario",
     "nickname": "Apodo",
     "save": "Guardar",
@@ -32,15 +28,12 @@
     "sign-in": "Iniciar sesión",
     "sign-up": "Registrarse",
     "sign-out": "Cerrar sesión",
-    "back-to-home": "Volver al Inicio",
     "type": "Tipo",
     "title": "Título",
     "filter": "Filtros",
     "tags": "Etiquetas",
     "yourself": "Tu",
-    "archived-at": "Archivado en",
     "changed": "cambiado",
-    "update-on": "Actualización de",
     "fold": "Plegar",
     "expand": "Expandir",
     "image": "Imagen",
@@ -52,36 +45,18 @@
     "mark": "Mark"
   },
   "auth": {
-    "signup-as-host": "Registrarse como Anfitrión",
-    "host-tip": "Te estás registrando como Anfitrión del Sitio.",
-    "not-host-tip": "Si no tienes una cuenta, ponte en contacto con el anfitrión del sitio."
-  },
-  "sidebar": {
-    "daily-review": "Resumen diario",
-    "resources": "Recursos",
-    "setting": "Ajustes",
-    "archived": "Archivado"
+    "host-tip": "Te estás registrando como Anfitrión del Sitio."
   },
   "resource": {
-    "description": "Visualiza tus recursos estáticos en notas. p.ej., imágenes",
     "no-resources": "Sin recursos.",
     "fetching-data": "obteniendo datos...",
-    "upload": "Subir",
-    "preview": "Vista previa",
     "copy-link": "Copiar Enlace",
     "delete-resource": "Borrar Recurso",
     "warning-text": "¿Está seguro de eliminar este recurso? ESTA ACCIÓN ES IRREVERSIBLE❗",
     "linked-amount": "Importe de la nota vinculado",
-    "rename": "Renombrar",
     "warning-text-unused": "¿Está seguro de eliminar estos recursos no utilizados? ESTA ACCIÓN ES IRREVERSIBLE❗",
     "no-unused-resources": "No hay recursos sin utilizar",
-    "name": "Nombre",
     "clear": "Limpiar"
-  },
-  "archived": {
-    "archived-memos": "Notas Archivadas",
-    "no-archived-memos": "No hay notas archivadas.",
-    "fetching-data": "obteniendo datos..."
   },
   "editor": {
     "editing": "Editando...",
@@ -95,7 +70,6 @@
   },
   "memo": {
     "view-detail": "Ver Detalles",
-    "copy": "Copiar",
     "copy-link": "Copiar Enlace",
     "visibility": {
       "private": "Solo visible para ti",
@@ -104,38 +78,8 @@
       "disabled": "Las notas públicas están deshabilitadas"
     }
   },
-  "memo-list": {
-    "fetching-data": "obteniendo datos...",
-    "fetch-more": "Click aqui para obtener más información"
-  },
-  "filter": {
-    "new-filter": "Nuevo Filtro",
-    "type": {
-      "tag": "Etiqueta",
-      "type": "Tipo",
-      "text": "Texto",
-      "display-time": "Fecha y Hora de Visualización",
-      "visibility": "Visibilidad"
-    },
-    "operator": {
-      "contains": "Contiene",
-      "not-contains": "No contiene",
-      "is": "Es",
-      "is-not": "No Es",
-      "before": "Antes",
-      "after": "Después"
-    },
-    "value": {
-      "not-tagged": "Sin etiquetas",
-      "linked": "Con enlaces"
-    },
-    "text-placeholder": "Empieza por ^ para usar regex"
-  },
   "tag-list": {
     "tip-text": "Escribe '#etiqueta' para crearlo"
-  },
-  "search": {
-    "quickly-filter": "Filtro rápido"
   },
   "setting": {
     "my-account": "Mi Cuenta",
@@ -187,7 +131,7 @@
     "storage": "Almacenamiento",
     "sso": "SSO",
     "storage-section": {
-      "storage-services-list": "Lista de servicios de almacenamiento",
+      "storage-services": "Lista de servicios de almacenamiento",
       "create-a-service": "Crear un servicio",
       "update-a-service": "Actualizar un servicio",
       "warning-text": "¿Está seguro de eliminar este servicio de almacenamiento? ESTA ACCIÓN ES IRREVERSIBLE❗",
@@ -197,16 +141,9 @@
   "amount-text": {
     "memo_one": "NOTA",
     "memo_many": "NOTAS",
-    "memo_other": "NOTAS",
-    "tag_one": "ETIQUETA",
-    "tag_many": "ETIQUETAS",
-    "tag_other": "ETIQUETAS",
-    "day_one": "DIA",
-    "day_many": "DIAS",
-    "day_other": "DIAS"
+    "memo_other": "NOTAS"
   },
   "message": {
-    "no-memos": "no hay notas 🌃",
     "memos-ready": "todas las notas están listas 🎉",
     "restored-successfully": "Restaurado con éxito",
     "memo-updated-datetime": "Fecha de creación de la nota modificada.",
@@ -232,10 +169,6 @@
     "click-to-save-the-image": "Haz clic para guardar la imagen",
     "generating-the-screenshot": "Generando la captura de pantalla...",
     "count-selected-resources": "Total seleccionado",
-    "too-short": "Demasiado corto",
-    "too-long": "Demasiado largo",
-    "not-allow-space": "No se admiten espacios",
-    "not-allow-chinese": "El chino no está permitido",
     "succeed-vacuum-database": "Exito al limpiar la base de datos",
     "succeed-update-additional-style": "Estilo adicional actualizado con éxito.",
     "succeed-copy-resource-link": "Enlace del recurso copiado con éxito.",
@@ -246,19 +179,12 @@
     "page-not-found": "404 - Página no encontrada 😥"
   },
   "days": {
-    "monday": "Lunes",
     "mon": "Lun",
-    "tuesday": "Martes",
     "tue": "Mart",
-    "wednesday": "Miércoles",
     "wed": "Miérc",
-    "thursday": "Jueves",
     "thu": "Juev",
-    "friday": "Viernes",
     "fri": "Vier",
-    "saturday": "Sábado",
     "sat": "Sáb",
-    "sunday": "Domingo",
     "sun": "Dom"
   }
 }

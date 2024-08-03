@@ -1,31 +1,53 @@
+import { tagServiceClient } from "@/grpcweb";
 import * as api from "@/helpers/api";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import store, { useAppSelector } from "..";
-import { deleteTag, setTags, upsertTag, setTagsCnt } from "../reducer/tag";
+import { deleteTag as deleteTagAction, setTags, upsertTag as upsertTagAction, setTagsCnt } from "../reducer/tag";
 
 export const useTagStore = () => {
   const state = useAppSelector((state) => state.tag);
+  const currentUser = useCurrentUser();
+
+  const getState = () => {
+    return store.getState().tag;
+  };
+
+  const fetchTags = async () => {
+    const { tags } = await tagServiceClient.listTags({
+      user: currentUser.name,
+    });
+    store.dispatch(setTags(tags.map((tag) => tag.name)));
+  };
+
+  const fetchTagsCnt = async () => {
+    const tagFind: TagFind = {};
+    const { data } = await api.getTagCnt(tagFind);
+    store.dispatch(setTagsCnt(data));
+  };
+
+  const upsertTag = async (tagName: string) => {
+    await tagServiceClient.upsertTag({
+      name: tagName,
+    });
+    store.dispatch(upsertTagAction(tagName));
+  };
+
+  const deleteTag = async (tagName: string) => {
+    await tagServiceClient.deleteTag({
+      tag: {
+        name: tagName,
+        creator: currentUser.name,
+      },
+    });
+    store.dispatch(deleteTagAction(tagName));
+  };
 
   return {
     state,
-    getState: () => {
-      return store.getState().tag;
-    },
-    fetchTags: async () => {
-      const { data } = await api.getTagList();
-      store.dispatch(setTags(data));
-    },
-    fetchTagsCnt: async () => {
-      const tagFind: TagFind = {};
-      const { data } = await api.getTagCnt(tagFind);
-      store.dispatch(setTagsCnt(data));
-    },
-    upsertTag: async (tagName: string) => {
-      await api.upsertTag(tagName);
-      store.dispatch(upsertTag(tagName));
-    },
-    deleteTag: async (tagName: string) => {
-      await api.deleteTag(tagName);
-      store.dispatch(deleteTag(tagName));
-    },
+    getState,
+    fetchTags,
+    fetchTagsCnt,
+    upsertTag,
+    deleteTag,
   };
 };

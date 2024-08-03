@@ -31,15 +31,15 @@ type TestingServer struct {
 
 func NewTestingServer(ctx context.Context, t *testing.T) (*TestingServer, error) {
 	profile := test.GetTestingProfile(t)
-	db := db.NewDB(profile)
-	if err := db.Open(); err != nil {
-		return nil, errors.Wrap(err, "failed to open db")
+	dbDriver, err := db.NewDBDriver(profile)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create db driver")
 	}
-	if err := db.Migrate(ctx); err != nil {
+	if err := dbDriver.Migrate(ctx); err != nil {
 		return nil, errors.Wrap(err, "failed to migrate db")
 	}
 
-	store := store.New(db.DBInstance, profile)
+	store := store.New(dbDriver, profile)
 	server, err := server.NewServer(ctx, profile, store)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create server")
@@ -142,7 +142,7 @@ func (s *TestingServer) request(method, uri string, body io.Reader, params, head
 				}
 			}
 			if cookie == "" {
-				return nil, errors.Errorf("unable to find access token in the login response headers")
+				return nil, errors.New("unable to find access token in the login response headers")
 			}
 			s.cookie = cookie
 		} else if strings.Contains(uri, "/api/v1/auth/signout") {

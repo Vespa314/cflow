@@ -1,6 +1,6 @@
 import { matcher } from "../matcher";
 
-export const HIGHLIGHT_REG = /==(.+?)==/;
+export const HIGHLIGHT_REG = /==(.+)==/;
 
 const renderer = (rawStr: string) => {
   const matchResult = matcher(rawStr, HIGHLIGHT_REG);

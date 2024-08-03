@@ -2,7 +2,9 @@ import { isEqual } from "lodash-es";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { convertFileToBase64 } from "@/helpers/utils";
-import { useUserStore } from "@/store/module";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { UserNamePrefix, useUserV1Store } from "@/store/v1";
+import { User as UserPb } from "@/types/proto/api/v2/user_service";
 import { useTranslate } from "@/utils/i18n";
 import { generateDialog } from "./Dialog";
 import Icon from "./Icon";
@@ -19,13 +21,13 @@ interface State {
 
 const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
   const t = useTranslate();
-  const userStore = useUserStore();
-  const user = userStore.state.user as User;
+  const currentUser = useCurrentUser();
+  const userV1Store = useUserV1Store();
   const [state, setState] = useState<State>({
-    avatarUrl: user.avatarUrl,
-    username: user.username,
-    nickname: user.nickname,
-    email: user.email,
+    avatarUrl: currentUser.avatarUrl,
+    username: currentUser.name.replace(UserNamePrefix, ""),
+    nickname: currentUser.nickname,
+    email: currentUser.email,
   });
 
   useEffect(() => {
@@ -93,23 +95,29 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
     }
 
     try {
-      const user = userStore.getState().user as User;
-      const userPatch: UserPatch = {
-        id: user.id,
-      };
-      if (!isEqual(user.avatarUrl, state.avatarUrl)) {
-        userPatch.avatarUrl = state.avatarUrl;
+      const updateMask = [];
+      if (!isEqual(currentUser.avatarUrl, state.avatarUrl)) {
+        updateMask.push("avatar_url");
       }
-      if (!isEqual(user.nickname, state.nickname)) {
-        userPatch.nickname = state.nickname;
+      if (!isEqual(currentUser.nickname, state.nickname)) {
+        updateMask.push("nickname");
       }
-      if (!isEqual(user.username, state.username)) {
-        userPatch.username = state.username;
+      if (!isEqual(currentUser.name.replace(UserNamePrefix, ""), state.username)) {
+        updateMask.push("username");
       }
-      if (!isEqual(user.email, state.email)) {
-        userPatch.email = state.email;
+      if (!isEqual(currentUser.email, state.email)) {
+        updateMask.push("email");
       }
-      await userStore.patchUser(userPatch);
+      await userV1Store.updateUser(
+        UserPb.fromPartial({
+          name: `${UserNamePrefix}${state.username}`,
+          id: currentUser.id,
+          nickname: state.nickname,
+          email: state.email,
+          avatarUrl: state.avatarUrl,
+        }),
+        updateMask
+      );
       toast.success(t("message.update-succeed"));
       handleCloseBtnClick();
     } catch (error: any) {
@@ -146,17 +154,14 @@ const UpdateAccountDialog: React.FC<Props> = ({ destroy }: Props) => {
         </div>
         <p className="text-sm">
           {t("common.username")}
-          <span className="text-sm text-gray-400 ml-1">{t("setting.account-section.username-note")}</span>
         </p>
         <input type="text" className="input-text" value={state.username} onChange={handleUsernameChanged} />
         <p className="text-sm">
           {t("common.nickname")}
-          <span className="text-sm text-gray-400 ml-1">{t("setting.account-section.nickname-note")}</span>
         </p>
         <input type="text" className="input-text" value={state.nickname} onChange={handleNicknameChanged} />
         <p className="text-sm">
           {t("common.email")}
-          <span className="text-sm text-gray-400 ml-1">{t("setting.account-section.email-note")}</span>
         </p>
         <input type="text" className="input-text" value={state.email} onChange={handleEmailChanged} />
         <div className="pt-2 w-full flex flex-row justify-end items-center space-x-2">

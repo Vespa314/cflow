@@ -5,13 +5,3 @@ interface ResourceCreate {
   externalLink: string;
   type: string;
 }
-
-interface ResourcePatch {
-  id: ResourceId;
-  filename?: string;
-}
-
-interface ResourceFind {
-  offset?: number;
-  limit?: number;
-}

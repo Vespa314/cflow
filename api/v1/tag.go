@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
 
 	"github.com/usememos/memos/store"
@@ -110,9 +109,6 @@ func (s *APIV1Service) CreateTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to upsert tag").SetInternal(err)
 	}
 	tagMessage := convertTagFromStore(tag)
-	if err := s.createTagCreateActivity(c, tagMessage); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create activity").SetInternal(err)
-	}
 	return c.JSON(http.StatusOK, tagMessage.Name)
 }
 
@@ -250,27 +246,6 @@ func (s *APIV1Service) GetTagSuggestion(c echo.Context) error {
 	}
 	sort.Strings(tagList)
 	return c.JSON(http.StatusOK, tagList)
-}
-
-func (s *APIV1Service) createTagCreateActivity(c echo.Context, tag *Tag) error {
-	ctx := c.Request().Context()
-	payload := ActivityTagCreatePayload{
-		TagName: tag.Name,
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return errors.Wrap(err, "failed to marshal activity payload")
-	}
-	activity, err := s.Store.CreateActivity(ctx, &store.Activity{
-		CreatorID: tag.CreatorID,
-		Type:      ActivityTagCreate.String(),
-		Level:     ActivityInfo.String(),
-		Payload:   string(payloadBytes),
-	})
-	if err != nil || activity == nil {
-		return errors.Wrap(err, "failed to create activity")
-	}
-	return err
 }
 
 func convertTagFromStore(tag *store.Tag) *Tag {

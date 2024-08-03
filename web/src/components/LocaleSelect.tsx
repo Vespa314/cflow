@@ -34,7 +34,6 @@ const LocaleSelect: FC<Props> = (props: Props) => {
             );
           }
         } catch (error) {
-          // do nth
         }
 
         return (

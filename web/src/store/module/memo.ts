@@ -2,7 +2,7 @@ import { omit } from "lodash-es";
 import * as api from "@/helpers/api";
 import { DEFAULT_MEMO_LIMIT } from "@/helpers/consts";
 import store, { useAppSelector } from "../";
-import { createMemo, deleteMemo, patchMemo, upsertMemos } from "../reducer/memo";
+import { updateLoadingStatus, createMemo, deleteMemo, patchMemo, upsertMemos, LoadingStatus } from "../reducer/memo";
 import { useMemoCacheStore } from "../v1";
 
 export const convertResponseModelMemo = (memo: Memo): Memo => {
@@ -14,6 +14,17 @@ export const convertResponseModelMemo = (memo: Memo): Memo => {
   };
 };
 
+
+export const convertTagSuggestionResp = (resp: Record<string, number>) => {
+  const tags = Object.keys(resp);
+  return tags.map((tag) => {
+    return {
+      tag: tag,
+      sim: resp[tag],
+    };
+  }).sort((a, b) => b.sim - a.sim);;
+}
+
 export const useMemoStore = () => {
   const state = useAppSelector((state) => state.memo);
   const memoCacheStore = useMemoCacheStore();
@@ -22,7 +33,6 @@ export const useMemoStore = () => {
     const { data } = await api.getMemoById(memoId);
     const memo = convertResponseModelMemo(data);
     store.dispatch(upsertMemos([memo]));
-
     return memo;
   };
 
@@ -40,12 +50,17 @@ export const useMemoStore = () => {
       if (username) {
         memoFind.creatorUsername = username;
       }
+
+      store.dispatch(updateLoadingStatus("fetching"));
       const { data } = await api.getMemoList(memoFind);
       const fetchedMemos = data.map((m) => convertResponseModelMemo(m));
       store.dispatch(upsertMemos(fetchedMemos));
+      store.dispatch(updateLoadingStatus(fetchedMemos.length === limit ? "incomplete" : "complete"));
+
       for (const m of fetchedMemos) {
         memoCacheStore.setMemoCache(m);
       }
+
       return fetchedMemos;
     },
     fetchAllMemos: async (limit = DEFAULT_MEMO_LIMIT, offset?: number) => {
@@ -54,9 +69,12 @@ export const useMemoStore = () => {
         limit,
         offset,
       };
+
+      store.dispatch(updateLoadingStatus("fetching"));
       const { data } = await api.getAllMemos(memoFind);
       const fetchedMemos = data.map((m) => convertResponseModelMemo(m));
       store.dispatch(upsertMemos(fetchedMemos));
+      store.dispatch(updateLoadingStatus(fetchedMemos.length === limit ? "incomplete" : "complete"));
 
       for (const m of fetchedMemos) {
         memoCacheStore.setMemoCache(m);
@@ -73,6 +91,9 @@ export const useMemoStore = () => {
         return convertResponseModelMemo(m);
       });
       return archivedMemos;
+    },
+    setLoadingStatus: (status: LoadingStatus) => {
+      store.dispatch(updateLoadingStatus(status));
     },
     fetchMemoById,
     getMemoById: async (memoId: MemoId) => {

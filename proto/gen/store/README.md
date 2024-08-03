@@ -3,7 +3,19 @@
 
 ## Table of Contents
 
+- [store/activity.proto](#store_activity-proto)
+    - [ActivityMemoCommentPayload](#memos-store-ActivityMemoCommentPayload)
+    - [ActivityPayload](#memos-store-ActivityPayload)
+    - [ActivityVersionUpdatePayload](#memos-store-ActivityVersionUpdatePayload)
+  
 - [store/common.proto](#store_common-proto)
+    - [RowStatus](#memos-store-RowStatus)
+  
+- [store/inbox.proto](#store_inbox-proto)
+    - [InboxMessage](#memos-store-InboxMessage)
+  
+    - [InboxMessage.Type](#memos-store-InboxMessage-Type)
+  
 - [store/system_setting.proto](#store_system_setting-proto)
     - [BackupConfig](#memos-store-BackupConfig)
   
@@ -16,7 +28,73 @@
   
     - [UserSettingKey](#memos-store-UserSettingKey)
   
+- [store/webhook.proto](#store_webhook-proto)
+    - [Webhook](#memos-store-Webhook)
+  
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="store_activity-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## store/activity.proto
+
+
+
+<a name="memos-store-ActivityMemoCommentPayload"></a>
+
+### ActivityMemoCommentPayload
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| memo_id | [int32](#int32) |  |  |
+| related_memo_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="memos-store-ActivityPayload"></a>
+
+### ActivityPayload
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| memo_comment | [ActivityMemoCommentPayload](#memos-store-ActivityMemoCommentPayload) |  |  |
+| version_update | [ActivityVersionUpdatePayload](#memos-store-ActivityVersionUpdatePayload) |  |  |
+
+
+
+
+
+
+<a name="memos-store-ActivityVersionUpdatePayload"></a>
+
+### ActivityVersionUpdatePayload
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version | [string](#string) |  |  |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
 
 
 
@@ -27,6 +105,64 @@
 
 
  
+
+
+<a name="memos-store-RowStatus"></a>
+
+### RowStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ROW_STATUS_UNSPECIFIED | 0 |  |
+| NORMAL | 1 |  |
+| ARCHIVED | 2 |  |
+
+
+ 
+
+ 
+
+ 
+
+
+
+<a name="store_inbox-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## store/inbox.proto
+
+
+
+<a name="memos-store-InboxMessage"></a>
+
+### InboxMessage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [InboxMessage.Type](#memos-store-InboxMessage-Type) |  |  |
+| activity_id | [int32](#int32) | optional |  |
+
+
+
+
+
+ 
+
+
+<a name="memos-store-InboxMessage-Type"></a>
+
+### InboxMessage.Type
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| TYPE_UNSPECIFIED | 0 |  |
+| TYPE_MEMO_COMMENT | 1 |  |
+| TYPE_VERSION_UPDATE | 2 |  |
+
 
  
 
@@ -130,6 +266,22 @@
 | user_id | [int32](#int32) |  |  |
 | key | [UserSettingKey](#memos-store-UserSettingKey) |  |  |
 | access_tokens | [AccessTokensUserSetting](#memos-store-AccessTokensUserSetting) |  |  |
+| locale | [string](#string) |  |  |
+| appearance | [string](#string) |  |  |
+| memo_visibility | [string](#string) |  |  |
+| mark_with_tag | [bool](#bool) |  |  |
+| show_word_cnt | [bool](#bool) |  |  |
+| custom_shortcut | [string](#string) |  |  |
+| fav_tag | [string](#string) |  |  |
+| ref_preview | [bool](#bool) |  |  |
+| show_todo_page | [bool](#bool) |  |  |
+| show_archive_page | [bool](#bool) |  |  |
+| paste_rename | [bool](#bool) |  |  |
+| show_tag_selector | [bool](#bool) |  |  |
+| show_memo_public | [bool](#bool) |  |  |
+| custom_card_style | [string](#string) |  |  |
+| double_click_edit | [bool](#bool) |  |  |
+| use_excalidraw | [bool](#bool) |  |  |
 
 
 
@@ -146,8 +298,61 @@
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | USER_SETTING_KEY_UNSPECIFIED | 0 |  |
-| USER_SETTING_ACCESS_TOKENS | 1 | Access tokens for the user. |
+| USER_SETTING_ACCESS_TOKENS | 1 |  |
+| USER_SETTING_LOCALE | 2 |  |
+| USER_SETTING_APPEARANCE | 3 |  |
+| USER_SETTING_MEMO_VISIBILITY | 4 |  |
+| USER_SETTING_MARK_WITH_TAG | 5 |  |
+| USER_SETTING_SHOW_WORD_CNT | 6 |  |
+| USER_SETTING_CUSTOM_SHORTCUT | 7 |  |
+| USER_SETTING_FAV_TAG | 8 |  |
+| USER_SETTING_REF_PREVIEW | 9 |  |
+| USER_SETTING_SHOW_TODO_PAGE | 10 |  |
+| USER_SETTING_SHOW_ARCHIVE_PAGE | 11 |  |
+| USER_SETTING_PASTE_RENAME | 12 |  |
+| USER_SETTING_SHOW_TAG_SELECTOR | 13 |  |
+| USER_SETTING_SHOW_MEMO_PUBLIC | 14 |  |
+| USER_SETTING_CUSTOM_CARD_STYLE | 15 |  |
+| USER_SETTING_DOUBLE_CLICK_EDIT | 16 |  |
+| USER_SETTING_USE_EXCALIDRAW | 17 |  |
 
+
+ 
+
+ 
+
+ 
+
+
+
+<a name="store_webhook-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## store/webhook.proto
+
+
+
+<a name="memos-store-Webhook"></a>
+
+### Webhook
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| created_ts | [int64](#int64) |  |  |
+| updated_ts | [int64](#int64) |  |  |
+| creator_id | [int32](#int32) |  |  |
+| row_status | [RowStatus](#memos-store-RowStatus) |  |  |
+| name | [string](#string) |  |  |
+| url | [string](#string) |  |  |
+
+
+
+
+
+ 
 
  
 

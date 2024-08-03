@@ -3,10 +3,6 @@
     "about": "Thông tin",
     "email": "Email",
     "password": "Mật khẩu",
-    "repeat-password-short": "Nhập lại",
-    "repeat-password": "Nhập lại mật khẩu",
-    "new-password": "Mật khẩu mới",
-    "repeat-new-password": "Nhập lại mật khẩu mới",
     "username": "Tên đăng nhập",
     "nickname": "Biệt danh",
     "save": "Lưu",
@@ -32,15 +28,12 @@
     "sign-in": "Đăng nhập",
     "sign-up": "Đăng ký",
     "sign-out": "Đăng xuất",
-    "back-to-home": "Về trang chủ",
     "type": "Kiểu",
     "title": "Tiêu đề",
     "filter": "Bộ lọc",
     "tags": "Thẻ",
     "yourself": "Chính bạn",
-    "archived-at": "Lưu trữ lúc",
     "changed": "đã thay đổi",
-    "update-on": "Cập nhật lúc",
     "fold": "Cuộn",
     "expand": "Mở rộng",
     "image": "Hình ảnh",
@@ -52,36 +45,18 @@
     "mark": "Mark"
   },
   "auth": {
-    "signup-as-host": "Đăng ký tài khoản quản trị viên",
-    "host-tip": "Bạn đang đăng ký với tư cách quản trị viên của trang web này.",
-    "not-host-tip": "Nếu chưa có tài khoản, bạn cần phải liên hệ quản trị viên của trang web."
-  },
-  "sidebar": {
-    "daily-review": "Đánh giá hàng ngày",
-    "resources": "Tài Nguyên",
-    "setting": "Cài Đặt",
-    "archived": "Lưu Trữ"
+    "host-tip": "Bạn đang đăng ký với tư cách quản trị viên của trang web này."
   },
   "resource": {
-    "description": "Xem toàn bộ tài nguyên của trang web. Ví dụ như các hình ảnh.",
     "no-resources": "Không có tài nguyên.",
     "fetching-data": "đang tải dữ liệu...",
-    "upload": "Tải lên",
-    "preview": "Xem trước",
     "copy-link": "Sao chép",
     "delete-resource": "Xóa tài nguyên",
     "warning-text": "Bạn có chắc chắn xóa tài nguyên này không? HÀNH ĐỘNG KHÔNG THỂ KHÔI PHỤC❗",
     "linked-amount": "Số ghi chú đã liên kết",
-    "rename": "Đổi tên",
     "warning-text-unused": "Bạn có chắc chắn xóa những tài nguyên không sử dụng này không? HÀNH ĐỘNG KHÔNG THỂ KHÔI PHỤC❗",
     "no-unused-resources": "Không có tài nguyên không sử dụng",
-    "clear": "Xóa tất cả",
-    "name": "Tên"
-  },
-  "archived": {
-    "archived-memos": "Ghi chú đã lưu trữ",
-    "no-archived-memos": "Không có ghi chú nào cả.",
-    "fetching-data": "đang tải dữ liệu..."
+    "clear": "Xóa tất cả"
   },
   "editor": {
     "editing": "Đang chỉnh sửa...",
@@ -95,7 +70,6 @@
   },
   "memo": {
     "view-detail": "Xem Chi Tiết",
-    "copy": "Sao Chép",
     "copy-link": "Sao Chép",
     "visibility": {
       "private": "Riêng tư",
@@ -104,38 +78,8 @@
       "disabled": "Ghi chú công khai đã bị vô hiệu hóa"
     }
   },
-  "memo-list": {
-    "fetching-data": "đang tải dữ liệu...",
-    "fetch-more": "Nhấp vào đây để tải thêm dữ liệu"
-  },
-  "filter": {
-    "new-filter": "Bộ Lọc Mới",
-    "type": {
-      "tag": "Thẻ",
-      "type": "Loại",
-      "text": "Văn Bản",
-      "display-time": "Thời Gian",
-      "visibility": "Hiển Thị"
-    },
-    "operator": {
-      "contains": "Chứa",
-      "not-contains": "Không Chứa",
-      "is": "Là",
-      "is-not": "Không Phải",
-      "before": "Trước",
-      "after": "Sau"
-    },
-    "value": {
-      "not-tagged": "Không có thẻ",
-      "linked": "Có liên kết"
-    },
-    "text-placeholder": "Bắt đầu với ^ để sử dụng biểu thức chính quy"
-  },
   "tag-list": {
     "tip-text": "Nhập `#tag` để tạo mới"
-  },
-  "search": {
-    "quickly-filter": "Lọc nhanh"
   },
   "setting": {
     "my-account": "Tài Khoản",
@@ -182,7 +126,7 @@
     "storage": "Kho lưu trữ",
     "sso": "SSO",
     "storage-section": {
-      "storage-services-list": "Danh sách dịch vụ kho lưu trữ",
+      "storage-services": "Danh sách dịch vụ kho lưu trữ",
       "create-a-service": "Thêm dịch vụ kho lưu trữ",
       "update-a-service": "Cập nhật dịch vụ kho lưu trữ",
       "warning-text": "Bạn có chắc chắn xóa tài nguyên này không? HÀNH ĐỘNG NÀY KHÔNG THỂ KHÔI PHỤC❗",
@@ -195,15 +139,9 @@
     }
   },
   "amount-text": {
-    "memo_other": "GHI CHÚ",
-    "tag_other": "THẺ",
-    "day_other": "NGÀY",
-    "memo_one": "MEMO",
-    "tag_one": "TAG",
-    "day_one": "DAY"
+    "memo_other": "GHI CHÚ"
   },
   "message": {
-    "no-memos": "Không có ghi chú nào 🌃",
     "memos-ready": "Tất cả ghi chú ở đây rồi 🎉",
     "restored-successfully": "Đã khôi phục thành công",
     "memo-updated-datetime": "Ghi chú đã thay đổi ngày giờ tạo.",
@@ -229,10 +167,6 @@
     "click-to-save-the-image": "Bấm để lưu hình ảnh",
     "generating-the-screenshot": "Đang tạo ảnh chụp màn hình ...",
     "count-selected-resources": "Tổng đã chọn",
-    "too-short": "Quá ngắn",
-    "too-long": "Quá dài",
-    "not-allow-space": "Không cho phép khoảng trống",
-    "not-allow-chinese": "Không sử dụng tiếng Trung Quốc",
     "succeed-vacuum-database": "Đã dọn dẹp cơ sở dữ liệu thành công",
     "succeed-update-additional-style": "Đã cập nhật phong cách bổ sung thành công",
     "succeed-copy-resource-link": "Đã sao chép liên kết tài nguyên",
@@ -243,19 +177,12 @@
     "page-not-found": "404 - Trang không tìm thấy 😥"
   },
   "days": {
-    "monday": "Thứ hai",
     "mon": "T2",
-    "tuesday": "Thứ ba",
     "tue": "T3",
-    "wednesday": "Thứ tư",
     "wed": "T4",
-    "thursday": "Thứ năm",
     "thu": "T5",
-    "friday": "Thứ sáu",
     "fri": "T6",
-    "saturday": "Thứ bảy",
     "sat": "T7",
-    "sunday": "Chủ nhật",
     "sun": "CN"
   }
 }

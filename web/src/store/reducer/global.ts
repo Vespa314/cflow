@@ -9,7 +9,7 @@ interface State {
 const globalSlice = createSlice({
   name: "global",
   initialState: {
-    locale: "en",
+    locale: "zh-Hans",
     appearance: "system",
     systemStatus: {
       host: undefined,
@@ -25,10 +25,10 @@ const globalSlice = createSlice({
       additionalScript: "",
       memoDisplayWithUpdatedTs: false,
       customizedProfile: {
-        name: "memos",
-        logoUrl: "/logo.webp",
+        name: "cflow",
+        logoUrl: "/cflow.jpg",
         description: "",
-        locale: "en",
+        locale: "zh-Hans",
         appearance: "system",
         externalUrl: "",
       },

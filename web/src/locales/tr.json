@@ -3,10 +3,6 @@
     "about": "Hakkında",
     "email": "E-posta",
     "password": "Parola",
-    "repeat-password-short": "Tekrar",
-    "repeat-password": "Parolayı tekrarlayın",
-    "new-password": "Yeni parola",
-    "repeat-new-password": "Yeni parolayı tekrarla",
     "username": "Kullanıcı adı",
     "nickname": "Takma ad",
     "save": "Kaydet",
@@ -32,46 +28,26 @@
     "sign-in": "Giriş yap",
     "sign-up": "Kaydol",
     "sign-out": "Çıkış yap",
-    "back-to-home": "Ana sayfaya dön",
     "type": "Tip",
     "title": "Başlık",
     "filter": "Filtre",
     "tags": "Etiketler",
     "yourself": "Sen",
-    "archived-at": "Arşivlendi",
     "mark": "Mark"
   },
   "auth": {
-    "signup-as-host": "Sahip olarak kaydolun",
-    "host-tip": "Site sahibi olarak kaydoluyorsunuz.",
-    "not-host-tip": "Hesabınız yoksa, site sahibiyle iletişime geçin."
-  },
-  "sidebar": {
-    "daily-review": "Günlük İnceleme",
-    "resources": "Kaynaklar",
-    "setting": "Ayarlar",
-    "archived": "Arşivlenmiş"
+    "host-tip": "Site sahibi olarak kaydoluyorsunuz."
   },
   "resource": {
-    "description": "Memos'taki statik kaynaklarınızı (fotoğraflar) görüntüleyin",
     "no-resources": "Kaynak yok.",
     "fetching-data": "veriler yükleniyor...",
-    "upload": "Yükle",
-    "preview": "Önizleme",
     "copy-link": "Bağlantıyı kopyala",
     "delete-resource": "Kaynağı sil",
     "warning-text": "Bu kaynağı silmek istediğinize emin misiniz? BU İŞLEM GERİ ALINAMAZ❗",
     "linked-amount": "Notların sayısı",
-    "rename": "Yeniden Adlandır",
     "warning-text-unused": "Kullanılmayan kaynakları silmek istediğinize emin misiniz? BU İŞLEM GERİ ALINAMAZ❗",
     "no-unused-resources": "Kullanılmayan kaynak yok",
-    "name": "Ad",
     "clear": "Temizle"
-  },
-  "archived": {
-    "archived-memos": "Arşivlenmiş Notlar",
-    "no-archived-memos": "Arşivlenmiş not yok.",
-    "fetching-data": "veriler yükleniyor..."
   },
   "editor": {
     "editing": "Düzenleniyor...",
@@ -85,7 +61,6 @@
   },
   "memo": {
     "view-detail": "Detayları görüntüle",
-    "copy": "Kopyala",
     "copy-link": "Bağlantıyı kopyala",
     "visibility": {
       "private": "Sadece sizin için görünür",
@@ -94,38 +69,8 @@
       "disabled": "Halka açık notlar devre dışı bırakıldı"
     }
   },
-  "memo-list": {
-    "fetching-data": "Veriler yükleniyor...",
-    "fetch-more": "Daha fazla yükle"
-  },
-  "filter": {
-    "new-filter": "Yeni filtre",
-    "type": {
-      "tag": "Etiket",
-      "type": "Tip",
-      "text": "Metin",
-      "display-time": "Görüntüleme süresi",
-      "visibility": "Görünürlük"
-    },
-    "operator": {
-      "contains": "İçerir",
-      "not-contains": "İçermez",
-      "is": "Eşittir",
-      "is-not": "Eşit değildir",
-      "before": "Öncesinde",
-      "after": "Sonrasında"
-    },
-    "value": {
-      "not-tagged": "Etiketlenmemiş",
-      "linked": "Bağlantılı"
-    },
-    "text-placeholder": "Düzenli ifadeler kullanmak için ^ işaretini kullanın"
-  },
   "tag-list": {
     "tip-text": "Oluşturmak için #etiket girin"
-  },
-  "search": {
-    "quickly-filter": "Hızlı filtre"
   },
   "setting": {
     "my-account": "Hesabım",
@@ -179,21 +124,16 @@
       "update-a-service": "Hizmeti güncelle",
       "warning-text": "Bu depolama hizmetini silmek istediğinizden emin misiniz? BU İŞLEM GERİ ALINAMAZ❗",
       "delete-storage": "Depolamayı Sil",
-      "storage-services-list": "Depolama hizmeti listesi",
+      "storage-services": "Depolama hizmeti listesi",
       "create-a-service": "Hizmet oluştur"
     },
     "sso": "SSO"
   },
   "amount-text": {
     "memo_one": "NOT",
-    "tag_one": "ETİKET",
-    "day_one": "GÜN",
-    "day_other": "GÜNLER",
-    "memo_other": "NOTLAR",
-    "tag_other": "ETİKETLER"
+    "memo_other": "NOTLAR"
   },
   "message": {
-    "no-memos": "not yok 🌃",
     "memos-ready": "daha fazla not yok 🎉",
     "restored-successfully": "Başarıyla geri yüklendi.",
     "memo-updated-datetime": "Oluşturma zamanı değiştirildi.",
@@ -219,10 +159,6 @@
     "click-to-save-the-image": "Kaydetmek için tıklayın",
     "generating-the-screenshot": "Ekran görüntüsü oluşturuluyor...",
     "count-selected-resources": "Toplam seçilen",
-    "too-short": "Çok kısa",
-    "too-long": "Çok uzun",
-    "not-allow-space": "Boşluk izin verilmez",
-    "not-allow-chinese": "Çince karakterler izin verilmez",
     "succeed-vacuum-database": "DB vakumlandı",
     "succeed-update-additional-style": "Stiller başarıyla eklendi",
     "succeed-copy-resource-link": "Kaynak bağlantısı panosuna kopyalandı",
@@ -233,19 +169,12 @@
     "page-not-found": "404 - Sayfa Bulunamadı 😥"
   },
   "days": {
-    "monday": "Pazartesi",
     "mon": "Paz",
-    "tuesday": "Salı",
     "tue": "Sal",
-    "wednesday": "Çarşamba",
     "wed": "Çar",
-    "thursday": "Perşembe",
     "thu": "Per",
-    "friday": "Cuma",
     "fri": "Cum",
-    "saturday": "Cumartesi",
     "sat": "Cum",
-    "sunday": "Pazar",
     "sun": "Paz"
   }
 }

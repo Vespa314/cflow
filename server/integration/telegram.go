@@ -3,9 +3,7 @@ package integration
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"strconv"
 	"unicode/utf16"
 
 	"github.com/pkg/errors"
@@ -24,7 +22,7 @@ func NewTelegramHandler(store *store.Store) *TelegramHandler {
 }
 
 func (t *TelegramHandler) BotToken(ctx context.Context) string {
-	return t.store.GetSystemSettingValueWithDefault(&ctx, apiv1.SystemSettingTelegramBotTokenName.String(), "")
+	return t.store.GetSystemSettingValueWithDefault(ctx, apiv1.SystemSettingTelegramBotTokenName.String(), "")
 }
 
 const (
@@ -39,25 +37,8 @@ func (t *TelegramHandler) MessageHandle(ctx context.Context, bot *telegram.Bot, 
 	}
 
 	var creatorID int32
-	userSettingList, err := t.store.ListUserSettings(ctx, &store.FindUserSetting{
-		Key: apiv1.UserSettingTelegramUserIDKey.String(),
-	})
-	if err != nil {
-		return errors.Wrap(err, "Failed to find userSettingList")
-	}
-	for _, userSetting := range userSettingList {
-		var value string
-		if err := json.Unmarshal([]byte(userSetting.Value), &value); err != nil {
-			continue
-		}
-
-		if value == strconv.FormatInt(message.From.ID, 10) {
-			creatorID = userSetting.UserID
-		}
-	}
-
 	if creatorID == 0 {
-		_, err := bot.EditMessage(ctx, message.Chat.ID, reply.MessageID, fmt.Sprintf("Please set your telegram userid %d in UserSetting of Memos", message.From.ID), nil)
+		_, err := bot.EditMessage(ctx, message.Chat.ID, reply.MessageID, fmt.Sprintf("Please set your telegram userid %d in UserSetting of memos", message.From.ID), nil)
 		return err
 	}
 
@@ -92,6 +73,7 @@ func (t *TelegramHandler) MessageHandle(ctx context.Context, bot *telegram.Bot, 
 			Filename:  attachment.FileName,
 			Type:      attachment.GetMimeType(),
 			Size:      attachment.FileSize,
+			MemoID:    &memoMessage.ID,
 		}
 
 		err := apiv1.SaveResourceBlob(ctx, t.store, &create, bytes.NewReader(attachment.Data))
@@ -100,18 +82,9 @@ func (t *TelegramHandler) MessageHandle(ctx context.Context, bot *telegram.Bot, 
 			return err
 		}
 
-		resource, err := t.store.CreateResource(ctx, &create)
+		_, err = t.store.CreateResource(ctx, &create)
 		if err != nil {
 			_, err := bot.EditMessage(ctx, message.Chat.ID, reply.MessageID, fmt.Sprintf("Failed to CreateResource: %s", err), nil)
-			return err
-		}
-
-		_, err = t.store.UpsertMemoResource(ctx, &store.UpsertMemoResource{
-			MemoID:     memoMessage.ID,
-			ResourceID: resource.ID,
-		})
-		if err != nil {
-			_, err := bot.EditMessage(ctx, message.Chat.ID, reply.MessageID, fmt.Sprintf("Failed to UpsertMemoResource: %s", err), nil)
 			return err
 		}
 	}

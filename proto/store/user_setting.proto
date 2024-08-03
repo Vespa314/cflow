@@ -11,14 +11,44 @@ message UserSetting {
 
   oneof value {
     AccessTokensUserSetting access_tokens = 3;
+    string locale = 4;
+    string appearance = 5;
+    string memo_visibility = 6;
+    bool mark_with_tag = 7;
+    bool show_word_cnt = 8;
+    string custom_shortcut = 9;
+    string fav_tag = 10;
+    bool ref_preview = 11;
+    bool show_todo_page = 12;
+    bool show_archive_page = 13;
+    bool paste_rename = 14;
+    bool show_tag_selector = 15;
+    bool show_memo_public = 16;
+    string custom_card_style = 17;
+    bool double_click_edit = 18;
+    bool use_excalidraw = 19;
   }
 }
 
 enum UserSettingKey {
   USER_SETTING_KEY_UNSPECIFIED = 0;
-
-  // Access tokens for the user.
   USER_SETTING_ACCESS_TOKENS = 1;
+  USER_SETTING_LOCALE = 2;
+  USER_SETTING_APPEARANCE = 3;
+  USER_SETTING_MEMO_VISIBILITY = 4;
+  USER_SETTING_MARK_WITH_TAG = 5;
+  USER_SETTING_SHOW_WORD_CNT = 6;
+  USER_SETTING_CUSTOM_SHORTCUT = 7;
+  USER_SETTING_FAV_TAG = 8;
+  USER_SETTING_REF_PREVIEW = 9;
+  USER_SETTING_SHOW_TODO_PAGE = 10;
+  USER_SETTING_SHOW_ARCHIVE_PAGE = 11;
+  USER_SETTING_PASTE_RENAME = 12;
+  USER_SETTING_SHOW_TAG_SELECTOR = 13;
+  USER_SETTING_SHOW_MEMO_PUBLIC = 14;
+  USER_SETTING_CUSTOM_CARD_STYLE = 15;
+  USER_SETTING_DOUBLE_CLICK_EDIT = 16;
+  USER_SETTING_USE_EXCALIDRAW = 17;
 }
 
 message AccessTokensUserSetting {

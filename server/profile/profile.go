@@ -23,17 +23,22 @@ type Profile struct {
 	Port int `json:"-"`
 	// Data is the data directory
 	Data string `json:"-"`
-	// DSN points to where Memos stores its own data
+	// DSN points to where memos stores its own data
 	DSN string `json:"-"`
+	// Driver is the database driver
+	// sqlite, mysql
+	Driver string `json:"-"`
 	// Version is the current version of server
 	Version string `json:"version"`
+	// Metric indicate the metric collection is enabled or not
+	Metric bool `json:"-"`
 }
 
 func (p *Profile) IsDev() bool {
 	return p.Mode != "prod"
 }
 
-func checkDSN(dataDir string) (string, error) {
+func checkDataDir(dataDir string) (string, error) {
 	// Convert to absolute path if relative path is supplied.
 	if !filepath.IsAbs(dataDir) {
 		relativeDir := filepath.Join(filepath.Dir(os.Args[0]), dataDir)
@@ -81,15 +86,17 @@ func GetProfile() (*Profile, error) {
 		}
 	}
 
-	dataDir, err := checkDSN(profile.Data)
+	dataDir, err := checkDataDir(profile.Data)
 	if err != nil {
 		fmt.Printf("Failed to check dsn: %s, err: %+v\n", dataDir, err)
 		return nil, err
 	}
 
 	profile.Data = dataDir
-	dbFile := fmt.Sprintf("memos_%s.db", profile.Mode)
-	profile.DSN = filepath.Join(dataDir, dbFile)
+	if profile.Driver == "sqlite" && profile.DSN == "" {
+		dbFile := fmt.Sprintf("memos_%s.db", profile.Mode)
+		profile.DSN = filepath.Join(dataDir, dbFile)
+	}
 	profile.Version = version.GetCurrentVersion(profile.Mode)
 
 	return &profile, nil

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -42,6 +43,8 @@ const (
 	SystemSettingMemoDisplayWithUpdatedTsName SystemSettingName = "memo-display-with-updated-ts"
 	// SystemSettingAutoBackupIntervalName is the name of auto backup interval as seconds.
 	SystemSettingAutoBackupIntervalName SystemSettingName = "auto-backup-interval"
+	// SystemSettingWebhookUrlName is the url of webhook.
+	SystemSettingWebhookUrlName SystemSettingName = "webhook-url"
 )
 const systemSettingUnmarshalError = `failed to unmarshal value from system setting "%v"`
 
@@ -220,10 +223,10 @@ func (upsert UpsertSystemSettingRequest) Validate() error {
 		}
 	case SystemSettingCustomizedProfileName:
 		customizedProfile := CustomizedProfile{
-			Name:        "memos",
+			Name:        "cflow",
 			LogoURL:     "",
 			Description: "",
-			Locale:      "en",
+			Locale:      "zh-Hans",
 			Appearance:  "system",
 			ExternalURL: "",
 		}
@@ -248,7 +251,7 @@ func (upsert UpsertSystemSettingRequest) Validate() error {
 			return errors.Errorf(systemSettingUnmarshalError, settingName)
 		}
 		if value < 0 {
-			return errors.Errorf("must be positive")
+			return errors.New("must be positive")
 		}
 	case SystemSettingTelegramBotTokenName:
 		if upsert.Value == "" {
@@ -260,7 +263,7 @@ func (upsert UpsertSystemSettingRequest) Validate() error {
 			if strings.HasPrefix(upsert.Value[slashIndex:], "/bot") {
 				return nil
 			}
-			return errors.Errorf("token start with `http` must end with `/bot<token>`")
+			return errors.New("token start with `http` must end with `/bot<token>`")
 		}
 		fragments := strings.Split(upsert.Value, ":")
 		if len(fragments) != 2 {
@@ -271,8 +274,15 @@ func (upsert UpsertSystemSettingRequest) Validate() error {
 		if err := json.Unmarshal([]byte(upsert.Value), &value); err != nil {
 			return errors.Errorf(systemSettingUnmarshalError, settingName)
 		}
+	case SystemSettingWebhookUrlName:
+		if upsert.Value == "" {
+			return nil
+		}
+		if !strings.HasPrefix(upsert.Value, "http") {
+			return fmt.Errorf(systemSettingUnmarshalError, settingName)
+		}
 	default:
-		return errors.Errorf("invalid system setting name")
+		return errors.New("invalid system setting name")
 	}
 	return nil
 }

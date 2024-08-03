@@ -1,6 +1,8 @@
+import * as api from "@/helpers/api";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useNavigateTo from "@/hooks/useNavigateTo";
-import { useGlobalStore, useUserStore } from "@/store/module";
+import { useGlobalStore } from "@/store/module";
+import { extractUsernameFromName } from "@/store/v1";
 import { User_Role } from "@/types/proto/api/v2/user_service";
 import { useTranslate } from "@/utils/i18n";
 import showAboutSiteDialog from "./AboutSiteDialog";
@@ -12,13 +14,12 @@ const UserBanner = () => {
   const t = useTranslate();
   const navigateTo = useNavigateTo();
   const globalStore = useGlobalStore();
-  const userStore = useUserStore();
   const { systemStatus } = globalStore.state;
   const user = useCurrentUser();
-  const title = user ? user.nickname : systemStatus.customizedProfile.name || "memos";
+  const title = user ? (user.nickname=="" ? extractUsernameFromName(user.name) : user.nickname) : systemStatus.customizedProfile.name || "cflow";
 
   const handleMyAccountClick = () => {
-    navigateTo(`/u/${encodeURIComponent(user.username)}`);
+    navigateTo(`/u/${encodeURIComponent(extractUsernameFromName(user.name))}`);
   };
 
   const handleAboutBtnClick = () => {
@@ -26,7 +27,7 @@ const UserBanner = () => {
   };
 
   const handleSignOutBtnClick = async () => {
-    await userStore.doSignOut();
+    await api.signout();
     window.location.href = "/auth";
   };
 
@@ -35,7 +36,7 @@ const UserBanner = () => {
       <Dropdown
         className="w-auto"
         trigger={
-          <div className="px-4 py-2 max-w-full flex flex-row justify-start items-center cursor-pointer rounded-lg hover:shadow hover:bg-white dark:hover:bg-zinc-700">
+          <div className="px-4 py-2 max-w-full flex flex-row justify-start items-center cursor-pointer rounded-2xl hover:shadow hover:bg-white dark:hover:bg-zinc-700">
             <UserAvatar className="shadow" avatarUrl={user?.avatarUrl} />
             <span className="px-1 text-lg font-medium text-slate-800 dark:text-gray-200 shrink truncate">{title}</span>
             {user?.role === User_Role.HOST ? (
@@ -55,15 +56,15 @@ const UserBanner = () => {
                 >
                   <Icon.User className="w-5 h-auto mr-2 opacity-80" /> {t("common.profile")}
                 </button>
-                {/* <a
-                  className="w-full px-3 truncate text-left leading-10 cursor-pointer rounded flex flex-row justify-start items-center dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                  href={`/u/${user?.id}/rss.xml`}
-                  target="_blank"
-                >
-                  <Icon.Rss className="w-5 h-auto mr-2 opacity-80" /> RSS
-                </a> */}
               </>
             )}
+            <a
+              className="w-full px-3 truncate text-left leading-10 cursor-pointer rounded flex flex-row justify-start items-center dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800"
+              href={`/explore`}
+              target="_self"
+            >
+              <Icon.Slack className="w-5 h-auto mr-2 opacity-80" /> {t("common.square")}
+            </a>
             <button
               className="w-full px-3 truncate text-left leading-10 cursor-pointer rounded flex flex-row justify-start items-center dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800"
               onClick={handleAboutBtnClick}

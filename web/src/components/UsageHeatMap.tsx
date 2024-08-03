@@ -3,10 +3,12 @@ import { getMemoStats } from "@/helpers/api";
 import { DAILY_TIMESTAMP } from "@/helpers/consts";
 import { getDateStampByDate, getDateString, getTimeStampByDate } from "@/helpers/datetime";
 import * as utils from "@/helpers/utils";
+import Icon from "./Icon";
+import showUsageDialog from "./ShowUsageDialog";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { useUserV1Store } from "@/store/v1";
-import { useTranslate } from "@/utils/i18n";
-import { useFilterStore, useMemoStore } from "../store/module";
+import { useUserV1Store, extractUsernameFromName } from "@/store/v1";
+import { useTranslate, Translations } from "@/utils/i18n";
+import { useFilterStore } from "../store/module";
 import "@/less/usage-heat-map.less";
 
 const tableConfig = {
@@ -35,13 +37,14 @@ const UsageHeatMap = () => {
   const filterStore = useFilterStore();
   const userV1Store = useUserV1Store();
   const user = useCurrentUser();
-  const memoStore = useMemoStore();
-  const todayTimeStamp = getDateStampByDate(Date.now());  // 今天零点的时间戳乘1000
-  const todayDay = (new Date(todayTimeStamp).getDay() + 6) % 7 + 1;  // 星期天为0， 所以才会在第一行
+  const todayTimeStamp = getDateStampByDate(Date.now());
+  const weekDay = new Date(todayTimeStamp).getDay();
+  const weekFromMonday = true;
+  const dayTips = weekFromMonday ? ["mon", "", "wed", "", "fri", "", "sun"] : ["sun", "", "tue", "", "thu", "", "sat"];
+  const todayDay = weekFromMonday ? (weekDay == 0 ? 7 : weekDay) : weekDay + 1;
   const nullCell = new Array(7 - todayDay).fill(0);
-  const usedDaysAmount = (tableConfig.width - 1) * tableConfig.height + todayDay;  // 总共需要格子数，最后一周占一列
-  const beginDayTimestamp = todayTimeStamp - usedDaysAmount * DAILY_TIMESTAMP;  // 第一天再前一天零点的时间戳乘1000
-  const memos = memoStore.state.memos;
+  const usedDaysAmount = (tableConfig.width - 1) * tableConfig.height + todayDay;
+  const beginDayTimestamp = todayTimeStamp - usedDaysAmount * DAILY_TIMESTAMP;
   const [memoAmount, setMemoAmount] = useState(0);
   const [createdDays, setCreatedDays] = useState(0);
   const [allStat, setAllStat] = useState<DailyUsageStat[]>(getInitialUsageStat(usedDaysAmount, beginDayTimestamp));
@@ -49,29 +52,23 @@ const UsageHeatMap = () => {
   const containerElRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    userV1Store.getOrFetchUserByUsername(user.username).then((user) => {
+    userV1Store.getOrFetchUserByUsername(extractUsernameFromName(user.name)).then((user) => {
       if (!user) {
         return;
       }
       setCreatedDays(Math.ceil((Date.now() - getTimeStampByDate(user.createTime)) / 1000 / 3600 / 24));
     });
-  }, [user.username]);
+  }, [user.name]);
 
   useEffect(() => {
-    if (memos.length === 0) {
-      return;
-    }
-
-    getMemoStats(user.username)
+    getMemoStats(extractUsernameFromName(user.name))
       .then(({ data }) => {
         setMemoAmount(data.length);
+        setCreatedDays(Math.ceil((Date.now() - (Math.floor(data[data.length-1]/86400)*86400)*1000) / 1000 / 3600 / 24));
         const newStat: DailyUsageStat[] = getInitialUsageStat(usedDaysAmount, beginDayTimestamp);
-        for (const record of data) {  // memo时间戳，精确到s
+        for (const record of data) {
           const index = (getDateStampByDate(record * 1000) - beginDayTimestamp) / (1000 * 3600 * 24) - 1;
           if (index >= 0) {
-            // because of dailight savings, some days may be 23 hours long instead of 24 hours long
-            // this causes the calculations to yield weird indices such as 40.93333333333
-            // rounding them may not give you the exact day on the heat map, but it's not too bad
             const exactIndex = +index.toFixed(0);
             newStat[exactIndex].count += 1;
           }
@@ -81,7 +78,7 @@ const UsageHeatMap = () => {
       .catch((error) => {
         console.error(error);
       });
-  }, [memos.length, user.username]);
+  }, [user.name]);
 
   const handleUsageStatItemMouseEnter = useCallback((event: React.MouseEvent, item: DailyUsageStat) => {
     const tempDiv = document.createElement("div");
@@ -112,10 +109,6 @@ const UsageHeatMap = () => {
       setCurrentStat(item);
     }
   }, []);
-
-  // This interpolation is not being used because of the current styling,
-  // but it can improve translation quality by giving it a more meaningful context
-  const tMemoInOpts = { amount: memoAmount, period: "", date: "" };
 
   return (
     <>
@@ -161,20 +154,19 @@ const UsageHeatMap = () => {
           ))}
         </div>
         <div className="day-tip-text-container">
-          <span className="tip-text">{t("days.mon")}</span>
-          <span className="tip-text"></span>
-          <span className="tip-text">{t("days.wed")}</span>
-          <span className="tip-text"></span>
-          <span className="tip-text">{t("days.fri")}</span>
-          <span className="tip-text"></span>
-          <span className="tip-text">{t("days.sun")}</span>
+          {dayTips.map((v, i) => (
+            <span className="tip-text" key={i}>
+              {v && t(("days." + v) as Translations)}
+            </span>
+          ))}
         </div>
       </div>
-      <p className="w-full pl-4 text-xs -mt-2 mb-3 text-gray-400 dark:text-zinc-400">
-        <span className="font-medium text-gray-500 dark:text-zinc-300">{createdDays} </span>
+      <p className="flex flex-row w-full pl-4 text-xs -mt-2 mb-3 text-gray-400 ">
+        <span className="font-medium text-gray-500 ">{createdDays} </span>
         天写了
-        <span className="font-medium text-gray-500 dark:text-zinc-300 number">{memoAmount} </span>
+        <span className="font-medium text-gray-500 number">{memoAmount} </span>
         张卡片
+        <Icon.ScatterChart className="cursor-pointer text-gray-500 ml-2 w-4 h-auto" onClick={() => showUsageDialog()}/>
       </p>
     </>
   );

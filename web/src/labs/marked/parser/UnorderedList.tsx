@@ -14,7 +14,7 @@ const renderer = (rawStr: string) => {
   return (
     <p className="li-container">
       <span className="whitespace-pre">{space}</span>
-      <span className="ul-block">•</span>
+      <span className="ul-block">{"•"}</span>
       <span>{parsedContent}</span>
     </p>
   );

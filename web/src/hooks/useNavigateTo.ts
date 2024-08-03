@@ -4,7 +4,7 @@ const useNavigateTo = () => {
   const navigateTo = useNavigate();
 
   const navigateToWithViewTransition = (to: string) => {
-    const document = window.document as any;
+    const document = window.document;
     if (!document.startViewTransition) {
       navigateTo(to);
     } else {

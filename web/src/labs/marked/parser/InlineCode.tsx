@@ -7,8 +7,7 @@ const renderer = (rawStr: string) => {
   if (!matchResult) {
     return rawStr;
   }
-
-  return <code>{matchResult[1]}</code>;
+  return <code className="inline_code">{matchResult[1]}</code>;
 };
 
 export default {

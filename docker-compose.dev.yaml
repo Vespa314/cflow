@@ -1,29 +1,70 @@
-# 1.Prepare your workspace by:
-#     docker compose -f docker-compose.dev.yaml run api go install github.com/cosmtrek/air@latest
-#     docker compose -f docker-compose.dev.yaml run web npm install
-#
-# 2. Start you work by:
-#     docker compose up -d
-#
-# 3. Check logs by:
-#     docker compose logs -f
-#
 services:
-  api:
-    image: golang:1.21-alpine
-    working_dir: /work
-    command: air -c ./scripts/.air.toml
+  db:
+    image: mysql
     volumes:
-      - $HOME/go/pkg/:/go/pkg/ # Cache for go mod shared with the host
-      - ./.air/bin/:/go/bin/ # Cache for binary used only in container, such as *air*
+      - ./.air/mysql:/var/lib/mysql
+  api:
+    image: cosmtrek/air
+    working_dir: /work
+    command: ["-c", "./scripts/.air.toml"]
+    environment:
+      - "MEMOS_DSN=root@tcp(db)/memos"
+      - "MEMOS_DRIVER=mysql"
+    volumes:
       - .:/work/
+      - .air/go-build:/root/.cache/go-build
+      - $HOME/go/pkg/:/go/pkg/ # Cache for go mod shared with the host
   web:
     image: node:18-alpine
     working_dir: /work
     depends_on: ["api"]
     ports: ["3001:3001"]
     environment: ["DEV_PROXY_SERVER=http://api:8081/"]
-    command: npm run dev
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["corepack enable && pnpm install && pnpm dev"]
     volumes:
       - ./web:/work
       - ./.air/node_modules/:/work/node_modules/ # Cache for Node Modules
+
+  # Services below are used for developers to run once
+  #
+  # You can just run `docker compose run --rm SERVICE_NAME` to use
+  # For example:
+  #   To regenerate typescript code of gRPC proto
+  #   Just run `docker compose run --rm buf`
+  #
+  # All of theses services belongs to profile 'tools'
+  # This will prevent to launch by normally `docker compose up` unexpectly
+
+  # Generate typescript code of gRPC proto
+  buf:
+    profiles: ["tools"]
+    image: bufbuild/buf
+    working_dir: /work/proto
+    command: generate
+    volumes:
+      - ./proto:/work/proto
+      - ./web/src/types/:/work/web/src/types/
+
+  # Do golang static code check before create PR
+  golangci-lint:
+    profiles: ["tools"]
+    image: golangci/golangci-lint:v1.54.2
+    working_dir: /work/
+    entrypoint: golangci-lint
+    command: run -v
+    volumes:
+      - $HOME/go/pkg/:/go/pkg/ # Cache for go mod shared with the host
+      - .air/go-build:/root/.cache/go-build
+      - .:/work/
+
+  # run npm
+  npm:
+    profiles: ["tools"]
+    image: node:18-alpine
+    working_dir: /work
+    environment: ["NPM_CONFIG_UPDATE_NOTIFIER=false"]
+    entrypoint: "npm"
+    volumes:
+      - ./web:/work
+      - ./.air/node_modules/:/work/node_modules/

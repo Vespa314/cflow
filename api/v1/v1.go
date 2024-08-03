@@ -1,8 +1,13 @@
 package v1
 
 import (
-	"github.com/labstack/echo/v4"
+	"net/http"
+	"time"
 
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/usememos/memos/api/resource"
 	"github.com/usememos/memos/plugin/telegram"
 	"github.com/usememos/memos/server/profile"
 	"github.com/usememos/memos/store"
@@ -44,6 +49,21 @@ func (s *APIV1Service) Register(rootGroup *echo.Group) {
 
 	// Register API v1 routes.
 	apiV1Group := rootGroup.Group("/api/v1")
+	apiV1Group.Use(middleware.RateLimiterWithConfig(middleware.RateLimiterConfig{
+		Store: middleware.NewRateLimiterMemoryStoreWithConfig(
+			middleware.RateLimiterMemoryStoreConfig{Rate: 30, Burst: 100, ExpiresIn: 3 * time.Minute},
+		),
+		IdentifierExtractor: func(ctx echo.Context) (string, error) {
+			id := ctx.RealIP()
+			return id, nil
+		},
+		ErrorHandler: func(context echo.Context, err error) error {
+			return context.JSON(http.StatusForbidden, nil)
+		},
+		DenyHandler: func(context echo.Context, identifier string, err error) error {
+			return context.JSON(http.StatusTooManyRequests, nil)
+		},
+	}))
 	apiV1Group.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return JWTMiddleware(s, next, s.Secret)
 	})
@@ -52,13 +72,11 @@ func (s *APIV1Service) Register(rootGroup *echo.Group) {
 	s.registerAuthRoutes(apiV1Group)
 	s.registerIdentityProviderRoutes(apiV1Group)
 	s.registerUserRoutes(apiV1Group)
-	s.registerUserSettingRoutes(apiV1Group)
 	s.registerTagRoutes(apiV1Group)
 	s.registerStorageRoutes(apiV1Group)
 	s.registerResourceRoutes(apiV1Group)
 	s.registerMemoRoutes(apiV1Group)
 	s.registerMemoOrganizerRoutes(apiV1Group)
-	s.registerMemoResourceRoutes(apiV1Group)
 	s.registerMemoRelationRoutes(apiV1Group)
 
 	// Register public routes.
@@ -67,7 +85,9 @@ func (s *APIV1Service) Register(rootGroup *echo.Group) {
 		return JWTMiddleware(s, next, s.Secret)
 	})
 	s.registerGetterPublicRoutes(publicGroup)
-	s.registerResourcePublicRoutes(publicGroup)
+	// Create and register resource public routes.
+	resourceService := resource.NewService(s.Profile, s.Store)
+	resourceService.RegisterResourcePublicRoutes(publicGroup)
 
 	// programmatically set API version same as the server version
 	SwaggerInfo.Version = s.Profile.Version

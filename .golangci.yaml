@@ -1,3 +1,5 @@
+run:
+  timeout: 10m
 linters:
   enable:
     - errcheck
@@ -64,6 +66,8 @@ linters-settings:
       - name: import-shadowing
         disabled: true
       - name: early-return
+        disabled: true
+      - name: use-any
         disabled: true
   gocritic:
     disabled-checks:

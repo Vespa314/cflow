@@ -17,15 +17,16 @@ export function vacuumDatabase() {
   return axios.post("/api/v1/system/vacuum");
 }
 
-export function signin(username: string, password: string) {
-  return axios.post("/api/v1/auth/signin", {
+export function signin(username: string, password: string, remember: boolean) {
+  return axios.post<User>("/api/v1/auth/signin", {
     username,
     password,
+    remember,
   });
 }
 
 export function signinWithSSO(identityProviderId: IdentityProviderId, code: string, redirectUri: string) {
-  return axios.post("/api/v1/auth/signin/sso", {
+  return axios.post<User>("/api/v1/auth/signin/sso", {
     identityProviderId,
     code,
     redirectUri,
@@ -33,7 +34,7 @@ export function signinWithSSO(identityProviderId: IdentityProviderId, code: stri
 }
 
 export function signup(username: string, password: string) {
-  return axios.post("/api/v1/auth/signup", {
+  return axios.post<User>("/api/v1/auth/signup", {
     username,
     password,
   });
@@ -43,29 +44,18 @@ export function signout() {
   return axios.post("/api/v1/auth/signout");
 }
 
-export function createUser(userCreate: UserCreate) {
-  return axios.post<User>("/api/v1/user", userCreate);
-}
-
-export function getMyselfUser() {
-  return axios.get<User>("/api/v1/user/me");
-}
-
 export function getUserList() {
   return axios.get<User[]>("/api/v1/user");
+}
+
+export function getUserById(id: number) {
+  return axios.get<User>(`/api/v1/user/${id}`);
 }
 
 export function upsertUserSetting(upsert: UserSettingUpsert) {
   return axios.post<UserSetting>(`/api/v1/user/setting`, upsert);
 }
 
-export function patchUser(userPatch: UserPatch) {
-  return axios.patch<User>(`/api/v1/user/${userPatch.id}`, userPatch);
-}
-
-export function deleteUser(userDelete: UserDelete) {
-  return axios.delete(`/api/v1/user/${userDelete.id}`);
-}
 
 export function getAllMemos(memoFind?: MemoFind) {
   const queryList = [];
@@ -135,10 +125,6 @@ export function deleteMemo(memoId: MemoId) {
   return axios.delete(`/api/v1/memo/${memoId}`);
 }
 
-export function getResourceList() {
-  return axios.get<Resource[]>("/api/v1/resource");
-}
-
 export function createResource(resourceCreate: ResourceCreate) {
   return axios.post<Resource>("/api/v1/resource", resourceCreate);
 }
@@ -147,30 +133,8 @@ export function createResourceWithBlob(formData: FormData) {
   return axios.post<Resource>("/api/v1/resource/blob", formData);
 }
 
-export function patchResource(resourcePatch: ResourcePatch) {
-  return axios.patch<Resource>(`/api/v1/resource/${resourcePatch.id}`, resourcePatch);
-}
-
-export function deleteResourceById(id: ResourceId) {
-  return axios.delete(`/api/v1/resource/${id}`);
-}
-
-export function getMemoResourceList(memoId: MemoId) {
-  return axios.get<Resource[]>(`/api/v1/memo/${memoId}/resource`);
-}
-
-export function upsertMemoResource(memoId: MemoId, resourceId: ResourceId) {
-  return axios.post(`/api/v1/memo/${memoId}/resource`, {
-    resourceId,
-  });
-}
-
-export function deleteMemoResource(memoId: MemoId, resourceId: ResourceId) {
-  return axios.delete(`/api/v1/memo/${memoId}/resource/${resourceId}`);
-}
-
-export function getTagList() {
-  return axios.get<string[]>(`/api/v1/tag`);
+export function updateResourceName(resource_id: number, filename: string) {
+  return axios.patch<Resource>(`/api/v1/resource/${resource_id}`, {"filename": filename});
 }
 
 export function getTagCnt(tagFind?: TagFind) {
@@ -181,22 +145,6 @@ export function getTagCnt(tagFind?: TagFind) {
   return axios.get<Record<string, number>>(`/api/v1/tag_cnt?${queryList.join("&")}`);
 }
 
-
-export function getTagSuggestionList() {
-  return axios.get<string[]>(`/api/v1/tag/suggestion`);
-}
-
-export function upsertTag(tagName: string) {
-  return axios.post<string>(`/api/v1/tag`, {
-    name: tagName,
-  });
-}
-
-export function deleteTag(tagName: string) {
-  return axios.post(`/api/v1/tag/delete`, {
-    name: tagName,
-  });
-}
 
 export function getStorageList() {
   return axios.get<ObjectStorage[]>(`/api/v1/storage`);
@@ -228,24 +176,4 @@ export function patchIdentityProvider(identityProviderPatch: IdentityProviderPat
 
 export function deleteIdentityProvider(id: IdentityProviderId) {
   return axios.delete(`/api/v1/idp/${id}`);
-}
-
-export async function getRepoStarCount() {
-  const { data } = await axios.get(`https://api.github.com/repos/usememos/memos`, {
-    headers: {
-      Accept: "application/vnd.github.v3.star+json",
-      Authorization: "",
-    },
-  });
-  return data.stargazers_count as number;
-}
-
-export async function getRepoLatestTag() {
-  const { data } = await axios.get(`https://api.github.com/repos/usememos/memos/tags`, {
-    headers: {
-      Accept: "application/vnd.github.v3.star+json",
-      Authorization: "",
-    },
-  });
-  return data[0].name as string;
 }

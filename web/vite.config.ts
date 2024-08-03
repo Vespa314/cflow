@@ -19,6 +19,10 @@ export default defineConfig({
         target: devProxyServer,
         xfwd: true,
       },
+      "^/memos.api.v2": {
+        target: devProxyServer,
+        xfwd: true,
+      },
       "^/o/": {
         target: devProxyServer,
         xfwd: true,
@@ -37,5 +41,8 @@ export default defineConfig({
     alias: {
       "@/": `${resolve(__dirname, "src")}/`,
     },
+  },
+  define: {
+    "process.env.IS_PREACT": JSON.stringify("true"),
   },
 });

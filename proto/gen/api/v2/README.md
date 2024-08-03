@@ -3,12 +3,75 @@
 
 ## Table of Contents
 
+- [api/v2/activity_service.proto](#api_v2_activity_service-proto)
+    - [Activity](#memos-api-v2-Activity)
+    - [ActivityMemoCommentPayload](#memos-api-v2-ActivityMemoCommentPayload)
+    - [ActivityPayload](#memos-api-v2-ActivityPayload)
+    - [ActivityVersionUpdatePayload](#memos-api-v2-ActivityVersionUpdatePayload)
+    - [GetActivityRequest](#memos-api-v2-GetActivityRequest)
+    - [GetActivityResponse](#memos-api-v2-GetActivityResponse)
+  
+    - [ActivityService](#memos-api-v2-ActivityService)
+  
 - [api/v2/common.proto](#api_v2_common-proto)
     - [RowStatus](#memos-api-v2-RowStatus)
   
+- [api/v2/user_service.proto](#api_v2_user_service-proto)
+    - [CreateUserAccessTokenRequest](#memos-api-v2-CreateUserAccessTokenRequest)
+    - [CreateUserAccessTokenResponse](#memos-api-v2-CreateUserAccessTokenResponse)
+    - [CreateUserRequest](#memos-api-v2-CreateUserRequest)
+    - [CreateUserResponse](#memos-api-v2-CreateUserResponse)
+    - [DeleteUserAccessTokenRequest](#memos-api-v2-DeleteUserAccessTokenRequest)
+    - [DeleteUserAccessTokenResponse](#memos-api-v2-DeleteUserAccessTokenResponse)
+    - [DeleteUserRequest](#memos-api-v2-DeleteUserRequest)
+    - [DeleteUserResponse](#memos-api-v2-DeleteUserResponse)
+    - [GetUserRequest](#memos-api-v2-GetUserRequest)
+    - [GetUserResponse](#memos-api-v2-GetUserResponse)
+    - [GetUserSettingRequest](#memos-api-v2-GetUserSettingRequest)
+    - [GetUserSettingResponse](#memos-api-v2-GetUserSettingResponse)
+    - [ListUserAccessTokensRequest](#memos-api-v2-ListUserAccessTokensRequest)
+    - [ListUserAccessTokensResponse](#memos-api-v2-ListUserAccessTokensResponse)
+    - [UpdateUserRequest](#memos-api-v2-UpdateUserRequest)
+    - [UpdateUserResponse](#memos-api-v2-UpdateUserResponse)
+    - [UpdateUserSettingRequest](#memos-api-v2-UpdateUserSettingRequest)
+    - [UpdateUserSettingResponse](#memos-api-v2-UpdateUserSettingResponse)
+    - [User](#memos-api-v2-User)
+    - [UserAccessToken](#memos-api-v2-UserAccessToken)
+    - [UserSetting](#memos-api-v2-UserSetting)
+  
+    - [User.Role](#memos-api-v2-User-Role)
+  
+    - [UserService](#memos-api-v2-UserService)
+  
+- [api/v2/auth_service.proto](#api_v2_auth_service-proto)
+    - [GetAuthStatusRequest](#memos-api-v2-GetAuthStatusRequest)
+    - [GetAuthStatusResponse](#memos-api-v2-GetAuthStatusResponse)
+  
+    - [AuthService](#memos-api-v2-AuthService)
+  
+- [api/v2/inbox_service.proto](#api_v2_inbox_service-proto)
+    - [DeleteInboxRequest](#memos-api-v2-DeleteInboxRequest)
+    - [DeleteInboxResponse](#memos-api-v2-DeleteInboxResponse)
+    - [Inbox](#memos-api-v2-Inbox)
+    - [ListInboxesRequest](#memos-api-v2-ListInboxesRequest)
+    - [ListInboxesResponse](#memos-api-v2-ListInboxesResponse)
+    - [UpdateInboxRequest](#memos-api-v2-UpdateInboxRequest)
+    - [UpdateInboxResponse](#memos-api-v2-UpdateInboxResponse)
+  
+    - [Inbox.Status](#memos-api-v2-Inbox-Status)
+    - [Inbox.Type](#memos-api-v2-Inbox-Type)
+  
+    - [InboxService](#memos-api-v2-InboxService)
+  
 - [api/v2/memo_service.proto](#api_v2_memo_service-proto)
+    - [CreateMemoCommentRequest](#memos-api-v2-CreateMemoCommentRequest)
+    - [CreateMemoCommentResponse](#memos-api-v2-CreateMemoCommentResponse)
+    - [CreateMemoRequest](#memos-api-v2-CreateMemoRequest)
+    - [CreateMemoResponse](#memos-api-v2-CreateMemoResponse)
     - [GetMemoRequest](#memos-api-v2-GetMemoRequest)
     - [GetMemoResponse](#memos-api-v2-GetMemoResponse)
+    - [ListMemoCommentsRequest](#memos-api-v2-ListMemoCommentsRequest)
+    - [ListMemoCommentsResponse](#memos-api-v2-ListMemoCommentsResponse)
     - [ListMemosRequest](#memos-api-v2-ListMemosRequest)
     - [ListMemosResponse](#memos-api-v2-ListMemosResponse)
     - [Memo](#memos-api-v2-Memo)
@@ -18,9 +81,15 @@
     - [MemoService](#memos-api-v2-MemoService)
   
 - [api/v2/resource_service.proto](#api_v2_resource_service-proto)
+    - [CreateResourceRequest](#memos-api-v2-CreateResourceRequest)
+    - [CreateResourceResponse](#memos-api-v2-CreateResourceResponse)
+    - [DeleteResourceRequest](#memos-api-v2-DeleteResourceRequest)
+    - [DeleteResourceResponse](#memos-api-v2-DeleteResourceResponse)
     - [ListResourcesRequest](#memos-api-v2-ListResourcesRequest)
     - [ListResourcesResponse](#memos-api-v2-ListResourcesResponse)
     - [Resource](#memos-api-v2-Resource)
+    - [UpdateResourceRequest](#memos-api-v2-UpdateResourceRequest)
+    - [UpdateResourceResponse](#memos-api-v2-UpdateResourceResponse)
   
     - [ResourceService](#memos-api-v2-ResourceService)
   
@@ -34,31 +103,159 @@
     - [SystemService](#memos-api-v2-SystemService)
   
 - [api/v2/tag_service.proto](#api_v2_tag_service-proto)
+    - [DeleteTagRequest](#memos-api-v2-DeleteTagRequest)
+    - [DeleteTagResponse](#memos-api-v2-DeleteTagResponse)
+    - [GetTagSuggestionsRequest](#memos-api-v2-GetTagSuggestionsRequest)
+    - [GetTagSuggestionsResponse](#memos-api-v2-GetTagSuggestionsResponse)
     - [ListTagsRequest](#memos-api-v2-ListTagsRequest)
     - [ListTagsResponse](#memos-api-v2-ListTagsResponse)
+    - [RenameTagRequest](#memos-api-v2-RenameTagRequest)
+    - [RenameTagResponse](#memos-api-v2-RenameTagResponse)
     - [Tag](#memos-api-v2-Tag)
+    - [UpsertTagRequest](#memos-api-v2-UpsertTagRequest)
+    - [UpsertTagResponse](#memos-api-v2-UpsertTagResponse)
   
     - [TagService](#memos-api-v2-TagService)
   
-- [api/v2/user_service.proto](#api_v2_user_service-proto)
-    - [CreateUserAccessTokenRequest](#memos-api-v2-CreateUserAccessTokenRequest)
-    - [CreateUserAccessTokenResponse](#memos-api-v2-CreateUserAccessTokenResponse)
-    - [DeleteUserAccessTokenRequest](#memos-api-v2-DeleteUserAccessTokenRequest)
-    - [DeleteUserAccessTokenResponse](#memos-api-v2-DeleteUserAccessTokenResponse)
-    - [GetUserRequest](#memos-api-v2-GetUserRequest)
-    - [GetUserResponse](#memos-api-v2-GetUserResponse)
-    - [ListUserAccessTokensRequest](#memos-api-v2-ListUserAccessTokensRequest)
-    - [ListUserAccessTokensResponse](#memos-api-v2-ListUserAccessTokensResponse)
-    - [UpdateUserRequest](#memos-api-v2-UpdateUserRequest)
-    - [UpdateUserResponse](#memos-api-v2-UpdateUserResponse)
-    - [User](#memos-api-v2-User)
-    - [UserAccessToken](#memos-api-v2-UserAccessToken)
+- [api/v2/webhook_service.proto](#api_v2_webhook_service-proto)
+    - [CreateWebhookRequest](#memos-api-v2-CreateWebhookRequest)
+    - [CreateWebhookResponse](#memos-api-v2-CreateWebhookResponse)
+    - [DeleteWebhookRequest](#memos-api-v2-DeleteWebhookRequest)
+    - [DeleteWebhookResponse](#memos-api-v2-DeleteWebhookResponse)
+    - [GetWebhookRequest](#memos-api-v2-GetWebhookRequest)
+    - [GetWebhookResponse](#memos-api-v2-GetWebhookResponse)
+    - [ListWebhooksRequest](#memos-api-v2-ListWebhooksRequest)
+    - [ListWebhooksResponse](#memos-api-v2-ListWebhooksResponse)
+    - [UpdateWebhookRequest](#memos-api-v2-UpdateWebhookRequest)
+    - [UpdateWebhookResponse](#memos-api-v2-UpdateWebhookResponse)
+    - [Webhook](#memos-api-v2-Webhook)
   
-    - [User.Role](#memos-api-v2-User-Role)
-  
-    - [UserService](#memos-api-v2-UserService)
+    - [WebhookService](#memos-api-v2-WebhookService)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="api_v2_activity_service-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## api/v2/activity_service.proto
+
+
+
+<a name="memos-api-v2-Activity"></a>
+
+### Activity
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| creator_id | [int32](#int32) |  |  |
+| type | [string](#string) |  |  |
+| level | [string](#string) |  |  |
+| create_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| payload | [ActivityPayload](#memos-api-v2-ActivityPayload) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-ActivityMemoCommentPayload"></a>
+
+### ActivityMemoCommentPayload
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| memo_id | [int32](#int32) |  |  |
+| related_memo_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-ActivityPayload"></a>
+
+### ActivityPayload
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| memo_comment | [ActivityMemoCommentPayload](#memos-api-v2-ActivityMemoCommentPayload) |  |  |
+| version_update | [ActivityVersionUpdatePayload](#memos-api-v2-ActivityVersionUpdatePayload) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-ActivityVersionUpdatePayload"></a>
+
+### ActivityVersionUpdatePayload
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-GetActivityRequest"></a>
+
+### GetActivityRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-GetActivityResponse"></a>
+
+### GetActivityResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| activity | [Activity](#memos-api-v2-Activity) |  |  |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+<a name="memos-api-v2-ActivityService"></a>
+
+### ActivityService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetActivity | [GetActivityRequest](#memos-api-v2-GetActivityRequest) | [GetActivityResponse](#memos-api-v2-GetActivityResponse) |  |
+
+ 
 
 
 
@@ -91,10 +288,670 @@
 
 
 
+<a name="api_v2_user_service-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## api/v2/user_service.proto
+
+
+
+<a name="memos-api-v2-CreateUserAccessTokenRequest"></a>
+
+### CreateUserAccessTokenRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the user. Format: users/{username} |
+| description | [string](#string) |  |  |
+| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
+
+
+
+
+
+
+<a name="memos-api-v2-CreateUserAccessTokenResponse"></a>
+
+### CreateUserAccessTokenResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| access_token | [UserAccessToken](#memos-api-v2-UserAccessToken) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-CreateUserRequest"></a>
+
+### CreateUserRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [User](#memos-api-v2-User) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-CreateUserResponse"></a>
+
+### CreateUserResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [User](#memos-api-v2-User) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-DeleteUserAccessTokenRequest"></a>
+
+### DeleteUserAccessTokenRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the user. Format: users/{username} |
+| access_token | [string](#string) |  | access_token is the access token to delete. |
+
+
+
+
+
+
+<a name="memos-api-v2-DeleteUserAccessTokenResponse"></a>
+
+### DeleteUserAccessTokenResponse
+
+
+
+
+
+
+
+<a name="memos-api-v2-DeleteUserRequest"></a>
+
+### DeleteUserRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the user. Format: users/{username} |
+
+
+
+
+
+
+<a name="memos-api-v2-DeleteUserResponse"></a>
+
+### DeleteUserResponse
+
+
+
+
+
+
+
+<a name="memos-api-v2-GetUserRequest"></a>
+
+### GetUserRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the user. Format: users/{username} |
+
+
+
+
+
+
+<a name="memos-api-v2-GetUserResponse"></a>
+
+### GetUserResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [User](#memos-api-v2-User) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-GetUserSettingRequest"></a>
+
+### GetUserSettingRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the user. Format: users/{username} |
+
+
+
+
+
+
+<a name="memos-api-v2-GetUserSettingResponse"></a>
+
+### GetUserSettingResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| setting | [UserSetting](#memos-api-v2-UserSetting) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-ListUserAccessTokensRequest"></a>
+
+### ListUserAccessTokensRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the user. Format: users/{username} |
+
+
+
+
+
+
+<a name="memos-api-v2-ListUserAccessTokensResponse"></a>
+
+### ListUserAccessTokensResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| access_tokens | [UserAccessToken](#memos-api-v2-UserAccessToken) | repeated |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateUserRequest"></a>
+
+### UpdateUserRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [User](#memos-api-v2-User) |  |  |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateUserResponse"></a>
+
+### UpdateUserResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [User](#memos-api-v2-User) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateUserSettingRequest"></a>
+
+### UpdateUserSettingRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| setting | [UserSetting](#memos-api-v2-UserSetting) |  |  |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateUserSettingResponse"></a>
+
+### UpdateUserSettingResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| setting | [UserSetting](#memos-api-v2-UserSetting) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-User"></a>
+
+### User
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the user. Format: users/{username} |
+| id | [int32](#int32) |  |  |
+| role | [User.Role](#memos-api-v2-User-Role) |  |  |
+| email | [string](#string) |  |  |
+| nickname | [string](#string) |  |  |
+| avatar_url | [string](#string) |  |  |
+| password | [string](#string) |  |  |
+| row_status | [RowStatus](#memos-api-v2-RowStatus) |  |  |
+| create_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| update_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UserAccessToken"></a>
+
+### UserAccessToken
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| access_token | [string](#string) |  |  |
+| description | [string](#string) |  |  |
+| issued_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UserSetting"></a>
+
+### UserSetting
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the user. Format: users/{username} |
+| locale | [string](#string) |  | The preferred locale of the user. |
+| appearance | [string](#string) |  | The preferred appearance of the user. |
+| memo_visibility | [string](#string) |  | The default visibility of the memo. |
+| mark_with_tag | [bool](#bool) |  | mark with tag |
+| show_word_cnt | [bool](#bool) |  | show word cnt |
+| custom_shortcut | [string](#string) |  | custom shortcut |
+| fav_tag | [string](#string) |  | favrivate tag |
+| ref_preview | [bool](#bool) |  | ref preview |
+| show_todo_page | [bool](#bool) |  | show todo page |
+| show_archive_page | [bool](#bool) |  | show archive page |
+| paste_rename | [bool](#bool) |  | paste rename |
+| show_tag_selector | [bool](#bool) |  | show tag selector |
+| show_memo_public | [bool](#bool) |  | show memo public button |
+| custom_card_style | [string](#string) |  | custom card style |
+| double_click_edit | [bool](#bool) |  | double click edit |
+| use_excalidraw | [bool](#bool) |  | use excalidraw |
+
+
+
+
+
+ 
+
+
+<a name="memos-api-v2-User-Role"></a>
+
+### User.Role
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ROLE_UNSPECIFIED | 0 |  |
+| HOST | 1 |  |
+| ADMIN | 2 |  |
+| USER | 3 |  |
+
+
+ 
+
+ 
+
+
+<a name="memos-api-v2-UserService"></a>
+
+### UserService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetUser | [GetUserRequest](#memos-api-v2-GetUserRequest) | [GetUserResponse](#memos-api-v2-GetUserResponse) | GetUser gets a user by name. |
+| CreateUser | [CreateUserRequest](#memos-api-v2-CreateUserRequest) | [CreateUserResponse](#memos-api-v2-CreateUserResponse) | CreateUser creates a new user. |
+| UpdateUser | [UpdateUserRequest](#memos-api-v2-UpdateUserRequest) | [UpdateUserResponse](#memos-api-v2-UpdateUserResponse) | UpdateUser updates a user. |
+| DeleteUser | [DeleteUserRequest](#memos-api-v2-DeleteUserRequest) | [DeleteUserResponse](#memos-api-v2-DeleteUserResponse) | DeleteUser deletes a user. |
+| GetUserSetting | [GetUserSettingRequest](#memos-api-v2-GetUserSettingRequest) | [GetUserSettingResponse](#memos-api-v2-GetUserSettingResponse) |  |
+| UpdateUserSetting | [UpdateUserSettingRequest](#memos-api-v2-UpdateUserSettingRequest) | [UpdateUserSettingResponse](#memos-api-v2-UpdateUserSettingResponse) |  |
+| ListUserAccessTokens | [ListUserAccessTokensRequest](#memos-api-v2-ListUserAccessTokensRequest) | [ListUserAccessTokensResponse](#memos-api-v2-ListUserAccessTokensResponse) | ListUserAccessTokens returns a list of access tokens for a user. |
+| CreateUserAccessToken | [CreateUserAccessTokenRequest](#memos-api-v2-CreateUserAccessTokenRequest) | [CreateUserAccessTokenResponse](#memos-api-v2-CreateUserAccessTokenResponse) | CreateUserAccessToken creates a new access token for a user. |
+| DeleteUserAccessToken | [DeleteUserAccessTokenRequest](#memos-api-v2-DeleteUserAccessTokenRequest) | [DeleteUserAccessTokenResponse](#memos-api-v2-DeleteUserAccessTokenResponse) | DeleteUserAccessToken deletes an access token for a user. |
+
+ 
+
+
+
+<a name="api_v2_auth_service-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## api/v2/auth_service.proto
+
+
+
+<a name="memos-api-v2-GetAuthStatusRequest"></a>
+
+### GetAuthStatusRequest
+
+
+
+
+
+
+
+<a name="memos-api-v2-GetAuthStatusResponse"></a>
+
+### GetAuthStatusResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [User](#memos-api-v2-User) |  |  |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+<a name="memos-api-v2-AuthService"></a>
+
+### AuthService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetAuthStatus | [GetAuthStatusRequest](#memos-api-v2-GetAuthStatusRequest) | [GetAuthStatusResponse](#memos-api-v2-GetAuthStatusResponse) |  |
+
+ 
+
+
+
+<a name="api_v2_inbox_service-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## api/v2/inbox_service.proto
+
+
+
+<a name="memos-api-v2-DeleteInboxRequest"></a>
+
+### DeleteInboxRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the inbox to delete. Format: inboxes/{inbox} |
+
+
+
+
+
+
+<a name="memos-api-v2-DeleteInboxResponse"></a>
+
+### DeleteInboxResponse
+
+
+
+
+
+
+
+<a name="memos-api-v2-Inbox"></a>
+
+### Inbox
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The name of the inbox. Format: inboxes/{id} |
+| sender | [string](#string) |  | Format: users/{username} |
+| receiver | [string](#string) |  | Format: users/{username} |
+| status | [Inbox.Status](#memos-api-v2-Inbox-Status) |  |  |
+| create_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| type | [Inbox.Type](#memos-api-v2-Inbox-Type) |  |  |
+| activity_id | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="memos-api-v2-ListInboxesRequest"></a>
+
+### ListInboxesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [string](#string) |  | Format: users/{username} |
+
+
+
+
+
+
+<a name="memos-api-v2-ListInboxesResponse"></a>
+
+### ListInboxesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| inboxes | [Inbox](#memos-api-v2-Inbox) | repeated |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateInboxRequest"></a>
+
+### UpdateInboxRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| inbox | [Inbox](#memos-api-v2-Inbox) |  |  |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateInboxResponse"></a>
+
+### UpdateInboxResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| inbox | [Inbox](#memos-api-v2-Inbox) |  |  |
+
+
+
+
+
+ 
+
+
+<a name="memos-api-v2-Inbox-Status"></a>
+
+### Inbox.Status
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STATUS_UNSPECIFIED | 0 |  |
+| UNREAD | 1 |  |
+| ARCHIVED | 2 |  |
+
+
+
+<a name="memos-api-v2-Inbox-Type"></a>
+
+### Inbox.Type
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| TYPE_UNSPECIFIED | 0 |  |
+| TYPE_MEMO_COMMENT | 1 |  |
+| TYPE_VERSION_UPDATE | 2 |  |
+
+
+ 
+
+ 
+
+
+<a name="memos-api-v2-InboxService"></a>
+
+### InboxService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListInboxes | [ListInboxesRequest](#memos-api-v2-ListInboxesRequest) | [ListInboxesResponse](#memos-api-v2-ListInboxesResponse) |  |
+| UpdateInbox | [UpdateInboxRequest](#memos-api-v2-UpdateInboxRequest) | [UpdateInboxResponse](#memos-api-v2-UpdateInboxResponse) |  |
+| DeleteInbox | [DeleteInboxRequest](#memos-api-v2-DeleteInboxRequest) | [DeleteInboxResponse](#memos-api-v2-DeleteInboxResponse) |  |
+
+ 
+
+
+
 <a name="api_v2_memo_service-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
 ## api/v2/memo_service.proto
+
+
+
+<a name="memos-api-v2-CreateMemoCommentRequest"></a>
+
+### CreateMemoCommentRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  | id is the memo id to create comment for. |
+| create | [CreateMemoRequest](#memos-api-v2-CreateMemoRequest) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-CreateMemoCommentResponse"></a>
+
+### CreateMemoCommentResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| memo | [Memo](#memos-api-v2-Memo) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-CreateMemoRequest"></a>
+
+### CreateMemoRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| content | [string](#string) |  |  |
+| visibility | [Visibility](#memos-api-v2-Visibility) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-CreateMemoResponse"></a>
+
+### CreateMemoResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| memo | [Memo](#memos-api-v2-Memo) |  |  |
+
+
+
 
 
 
@@ -128,6 +985,36 @@
 
 
 
+<a name="memos-api-v2-ListMemoCommentsRequest"></a>
+
+### ListMemoCommentsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-ListMemoCommentsResponse"></a>
+
+### ListMemoCommentsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| memos | [Memo](#memos-api-v2-Memo) | repeated |  |
+
+
+
+
+
+
 <a name="memos-api-v2-ListMemosRequest"></a>
 
 ### ListMemosRequest
@@ -139,6 +1026,7 @@
 | page | [int32](#int32) |  |  |
 | page_size | [int32](#int32) |  |  |
 | filter | [string](#string) |  | Filter is used to filter memos returned in the list. |
+| creator_id | [int32](#int32) | optional |  |
 
 
 
@@ -209,8 +1097,11 @@
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| CreateMemo | [CreateMemoRequest](#memos-api-v2-CreateMemoRequest) | [CreateMemoResponse](#memos-api-v2-CreateMemoResponse) |  |
 | ListMemos | [ListMemosRequest](#memos-api-v2-ListMemosRequest) | [ListMemosResponse](#memos-api-v2-ListMemosResponse) |  |
 | GetMemo | [GetMemoRequest](#memos-api-v2-GetMemoRequest) | [GetMemoResponse](#memos-api-v2-GetMemoResponse) |  |
+| CreateMemoComment | [CreateMemoCommentRequest](#memos-api-v2-CreateMemoCommentRequest) | [CreateMemoCommentResponse](#memos-api-v2-CreateMemoCommentResponse) |  |
+| ListMemoComments | [ListMemoCommentsRequest](#memos-api-v2-ListMemoCommentsRequest) | [ListMemoCommentsResponse](#memos-api-v2-ListMemoCommentsResponse) |  |
 
  
 
@@ -220,6 +1111,64 @@
 <p align="right"><a href="#top">Top</a></p>
 
 ## api/v2/resource_service.proto
+
+
+
+<a name="memos-api-v2-CreateResourceRequest"></a>
+
+### CreateResourceRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filename | [string](#string) |  |  |
+| external_link | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| memo_id | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="memos-api-v2-CreateResourceResponse"></a>
+
+### CreateResourceResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| resource | [Resource](#memos-api-v2-Resource) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-DeleteResourceRequest"></a>
+
+### DeleteResourceRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-DeleteResourceResponse"></a>
+
+### DeleteResourceResponse
+
+
+
+
 
 
 
@@ -262,7 +1211,38 @@
 | external_link | [string](#string) |  |  |
 | type | [string](#string) |  |  |
 | size | [int64](#int64) |  |  |
-| related_memo_id | [int32](#int32) | optional |  |
+| memo_id | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateResourceRequest"></a>
+
+### UpdateResourceRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| resource | [Resource](#memos-api-v2-Resource) |  |  |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateResourceResponse"></a>
+
+### UpdateResourceResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| resource | [Resource](#memos-api-v2-Resource) |  |  |
 
 
 
@@ -282,7 +1262,10 @@
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| CreateResource | [CreateResourceRequest](#memos-api-v2-CreateResourceRequest) | [CreateResourceResponse](#memos-api-v2-CreateResourceResponse) |  |
 | ListResources | [ListResourcesRequest](#memos-api-v2-ListResourcesRequest) | [ListResourcesResponse](#memos-api-v2-ListResourcesResponse) |  |
+| UpdateResource | [UpdateResourceRequest](#memos-api-v2-UpdateResourceRequest) | [UpdateResourceResponse](#memos-api-v2-UpdateResourceResponse) |  |
+| DeleteResource | [DeleteResourceRequest](#memos-api-v2-DeleteResourceRequest) | [DeleteResourceResponse](#memos-api-v2-DeleteResourceResponse) |  |
 
  
 
@@ -350,7 +1333,7 @@
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | system_info | [SystemInfo](#memos-api-v2-SystemInfo) |  | System info is the updated data. |
-| update_mask | [string](#string) | repeated | Update mask is the array of paths. |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
 
 
 
@@ -399,6 +1382,61 @@
 
 
 
+<a name="memos-api-v2-DeleteTagRequest"></a>
+
+### DeleteTagRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tag | [Tag](#memos-api-v2-Tag) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-DeleteTagResponse"></a>
+
+### DeleteTagResponse
+
+
+
+
+
+
+
+<a name="memos-api-v2-GetTagSuggestionsRequest"></a>
+
+### GetTagSuggestionsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [string](#string) |  | The creator of tags. Format: users/{username} |
+
+
+
+
+
+
+<a name="memos-api-v2-GetTagSuggestionsResponse"></a>
+
+### GetTagSuggestionsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tags | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="memos-api-v2-ListTagsRequest"></a>
 
 ### ListTagsRequest
@@ -407,7 +1445,7 @@
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| creator_id | [int32](#int32) |  |  |
+| user | [string](#string) |  | The creator of tags. Format: users/{username} |
 
 
 
@@ -429,6 +1467,38 @@
 
 
 
+<a name="memos-api-v2-RenameTagRequest"></a>
+
+### RenameTagRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [string](#string) |  | The creator of tags. Format: users/{username} |
+| old_name | [string](#string) |  |  |
+| new_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-RenameTagResponse"></a>
+
+### RenameTagResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tag | [Tag](#memos-api-v2-Tag) |  |  |
+
+
+
+
+
+
 <a name="memos-api-v2-Tag"></a>
 
 ### Tag
@@ -438,7 +1508,37 @@
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
-| creator_id | [int32](#int32) |  |  |
+| creator | [string](#string) |  | The creator of tags. Format: users/{username} |
+
+
+
+
+
+
+<a name="memos-api-v2-UpsertTagRequest"></a>
+
+### UpsertTagRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpsertTagResponse"></a>
+
+### UpsertTagResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tag | [Tag](#memos-api-v2-Tag) |  |  |
 
 
 
@@ -458,205 +1558,185 @@
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| UpsertTag | [UpsertTagRequest](#memos-api-v2-UpsertTagRequest) | [UpsertTagResponse](#memos-api-v2-UpsertTagResponse) |  |
 | ListTags | [ListTagsRequest](#memos-api-v2-ListTagsRequest) | [ListTagsResponse](#memos-api-v2-ListTagsResponse) |  |
+| DeleteTag | [DeleteTagRequest](#memos-api-v2-DeleteTagRequest) | [DeleteTagResponse](#memos-api-v2-DeleteTagResponse) |  |
+| GetTagSuggestions | [GetTagSuggestionsRequest](#memos-api-v2-GetTagSuggestionsRequest) | [GetTagSuggestionsResponse](#memos-api-v2-GetTagSuggestionsResponse) |  |
+| RenameTag | [RenameTagRequest](#memos-api-v2-RenameTagRequest) | [RenameTagResponse](#memos-api-v2-RenameTagResponse) |  |
 
  
 
 
 
-<a name="api_v2_user_service-proto"></a>
+<a name="api_v2_webhook_service-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## api/v2/user_service.proto
+## api/v2/webhook_service.proto
 
 
 
-<a name="memos-api-v2-CreateUserAccessTokenRequest"></a>
+<a name="memos-api-v2-CreateWebhookRequest"></a>
 
-### CreateUserAccessTokenRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| username | [string](#string) |  |  |
-| description | [string](#string) |  |  |
-| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
-
-
-
-
-
-
-<a name="memos-api-v2-CreateUserAccessTokenResponse"></a>
-
-### CreateUserAccessTokenResponse
+### CreateWebhookRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| access_token | [UserAccessToken](#memos-api-v2-UserAccessToken) |  |  |
+| name | [string](#string) |  |  |
+| url | [string](#string) |  |  |
 
 
 
 
 
 
-<a name="memos-api-v2-DeleteUserAccessTokenRequest"></a>
+<a name="memos-api-v2-CreateWebhookResponse"></a>
 
-### DeleteUserAccessTokenRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| username | [string](#string) |  |  |
-| access_token | [string](#string) |  | access_token is the access token to delete. |
-
-
-
-
-
-
-<a name="memos-api-v2-DeleteUserAccessTokenResponse"></a>
-
-### DeleteUserAccessTokenResponse
-
-
-
-
-
-
-
-<a name="memos-api-v2-GetUserRequest"></a>
-
-### GetUserRequest
+### CreateWebhookResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| username | [string](#string) |  |  |
+| webhook | [Webhook](#memos-api-v2-Webhook) |  |  |
 
 
 
 
 
 
-<a name="memos-api-v2-GetUserResponse"></a>
+<a name="memos-api-v2-DeleteWebhookRequest"></a>
 
-### GetUserResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| user | [User](#memos-api-v2-User) |  |  |
-
-
-
-
-
-
-<a name="memos-api-v2-ListUserAccessTokensRequest"></a>
-
-### ListUserAccessTokensRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| username | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="memos-api-v2-ListUserAccessTokensResponse"></a>
-
-### ListUserAccessTokensResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| access_tokens | [UserAccessToken](#memos-api-v2-UserAccessToken) | repeated |  |
-
-
-
-
-
-
-<a name="memos-api-v2-UpdateUserRequest"></a>
-
-### UpdateUserRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| username | [string](#string) |  |  |
-| user | [User](#memos-api-v2-User) |  |  |
-| update_mask | [string](#string) | repeated | The update mask applies to the user resource. |
-
-
-
-
-
-
-<a name="memos-api-v2-UpdateUserResponse"></a>
-
-### UpdateUserResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| user | [User](#memos-api-v2-User) |  |  |
-
-
-
-
-
-
-<a name="memos-api-v2-User"></a>
-
-### User
+### DeleteWebhookRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| username | [string](#string) |  |  |
-| role | [User.Role](#memos-api-v2-User-Role) |  |  |
-| email | [string](#string) |  |  |
-| nickname | [string](#string) |  |  |
-| avatar_url | [string](#string) |  |  |
-| password | [string](#string) |  |  |
-| row_status | [RowStatus](#memos-api-v2-RowStatus) |  |  |
-| create_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| update_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
 
 
 
-<a name="memos-api-v2-UserAccessToken"></a>
+<a name="memos-api-v2-DeleteWebhookResponse"></a>
 
-### UserAccessToken
+### DeleteWebhookResponse
+
+
+
+
+
+
+
+<a name="memos-api-v2-GetWebhookRequest"></a>
+
+### GetWebhookRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| access_token | [string](#string) |  |  |
-| description | [string](#string) |  |  |
-| issued_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-GetWebhookResponse"></a>
+
+### GetWebhookResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| webhook | [Webhook](#memos-api-v2-Webhook) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-ListWebhooksRequest"></a>
+
+### ListWebhooksRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| creator_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-ListWebhooksResponse"></a>
+
+### ListWebhooksResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| webhooks | [Webhook](#memos-api-v2-Webhook) | repeated |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateWebhookRequest"></a>
+
+### UpdateWebhookRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| webhook | [Webhook](#memos-api-v2-Webhook) |  |  |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-UpdateWebhookResponse"></a>
+
+### UpdateWebhookResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| webhook | [Webhook](#memos-api-v2-Webhook) |  |  |
+
+
+
+
+
+
+<a name="memos-api-v2-Webhook"></a>
+
+### Webhook
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| creator_id | [int32](#int32) |  |  |
+| created_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| row_status | [RowStatus](#memos-api-v2-RowStatus) |  |  |
+| name | [string](#string) |  |  |
+| url | [string](#string) |  |  |
 
 
 
@@ -664,37 +1744,23 @@
 
  
 
-
-<a name="memos-api-v2-User-Role"></a>
-
-### User.Role
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| ROLE_UNSPECIFIED | 0 |  |
-| HOST | 1 |  |
-| ADMIN | 2 |  |
-| USER | 3 |  |
-
-
  
 
  
 
 
-<a name="memos-api-v2-UserService"></a>
+<a name="memos-api-v2-WebhookService"></a>
 
-### UserService
+### WebhookService
 
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| GetUser | [GetUserRequest](#memos-api-v2-GetUserRequest) | [GetUserResponse](#memos-api-v2-GetUserResponse) |  |
-| UpdateUser | [UpdateUserRequest](#memos-api-v2-UpdateUserRequest) | [UpdateUserResponse](#memos-api-v2-UpdateUserResponse) |  |
-| ListUserAccessTokens | [ListUserAccessTokensRequest](#memos-api-v2-ListUserAccessTokensRequest) | [ListUserAccessTokensResponse](#memos-api-v2-ListUserAccessTokensResponse) | ListUserAccessTokens returns a list of access tokens for a user. |
-| CreateUserAccessToken | [CreateUserAccessTokenRequest](#memos-api-v2-CreateUserAccessTokenRequest) | [CreateUserAccessTokenResponse](#memos-api-v2-CreateUserAccessTokenResponse) | CreateUserAccessToken creates a new access token for a user. |
-| DeleteUserAccessToken | [DeleteUserAccessTokenRequest](#memos-api-v2-DeleteUserAccessTokenRequest) | [DeleteUserAccessTokenResponse](#memos-api-v2-DeleteUserAccessTokenResponse) | DeleteUserAccessToken deletes an access token for a user. |
+| CreateWebhook | [CreateWebhookRequest](#memos-api-v2-CreateWebhookRequest) | [CreateWebhookResponse](#memos-api-v2-CreateWebhookResponse) |  |
+| GetWebhook | [GetWebhookRequest](#memos-api-v2-GetWebhookRequest) | [GetWebhookResponse](#memos-api-v2-GetWebhookResponse) |  |
+| ListWebhooks | [ListWebhooksRequest](#memos-api-v2-ListWebhooksRequest) | [ListWebhooksResponse](#memos-api-v2-ListWebhooksResponse) |  |
+| UpdateWebhook | [UpdateWebhookRequest](#memos-api-v2-UpdateWebhookRequest) | [UpdateWebhookResponse](#memos-api-v2-UpdateWebhookResponse) |  |
+| DeleteWebhook | [DeleteWebhookRequest](#memos-api-v2-DeleteWebhookRequest) | [DeleteWebhookResponse](#memos-api-v2-DeleteWebhookResponse) |  |
 
  
 

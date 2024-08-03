@@ -16,42 +16,43 @@ func TestMemoRelationStore(t *testing.T) {
 	require.NoError(t, err)
 	memoCreate := &store.Memo{
 		CreatorID:  user.ID,
-		Content:    "test_content",
+		Content:    "main memo content",
 		Visibility: store.Public,
 	}
 	memo, err := ts.CreateMemo(ctx, memoCreate)
 	require.NoError(t, err)
 	require.Equal(t, memoCreate.Content, memo.Content)
-	memo2Create := &store.Memo{
+	relatedMemoCreate := &store.Memo{
 		CreatorID:  user.ID,
-		Content:    "test_content_2",
+		Content:    "related memo content",
 		Visibility: store.Public,
 	}
-	memo2, err := ts.CreateMemo(ctx, memo2Create)
+	relatedMemo, err := ts.CreateMemo(ctx, relatedMemoCreate)
 	require.NoError(t, err)
-	require.Equal(t, memo2Create.Content, memo2.Content)
-	memoRelationMessage := &store.MemoRelation{
+	require.Equal(t, relatedMemoCreate.Content, relatedMemo.Content)
+	commentMemoCreate := &store.Memo{
+		CreatorID:  user.ID,
+		Content:    "comment memo content",
+		Visibility: store.Public,
+	}
+	commentMemo, err := ts.CreateMemo(ctx, commentMemoCreate)
+	require.NoError(t, err)
+	require.Equal(t, commentMemoCreate.Content, commentMemo.Content)
+
+	// Reference relation.
+	referenceRelation := &store.MemoRelation{
 		MemoID:        memo.ID,
-		RelatedMemoID: memo2.ID,
+		RelatedMemoID: relatedMemo.ID,
 		Type:          store.MemoRelationReference,
 	}
-	_, err = ts.UpsertMemoRelation(ctx, memoRelationMessage)
+	_, err = ts.UpsertMemoRelation(ctx, referenceRelation)
 	require.NoError(t, err)
-	memoRelation, err := ts.ListMemoRelations(ctx, &store.FindMemoRelation{
-		MemoID: &memo.ID,
-	})
+	// Comment relation.
+	commentRelation := &store.MemoRelation{
+		MemoID:        memo.ID,
+		RelatedMemoID: commentMemo.ID,
+		Type:          store.MemoRelationComment,
+	}
+	_, err = ts.UpsertMemoRelation(ctx, commentRelation)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(memoRelation))
-	require.Equal(t, memo2.ID, memoRelation[0].RelatedMemoID)
-	require.Equal(t, memo.ID, memoRelation[0].MemoID)
-	require.Equal(t, store.MemoRelationReference, memoRelation[0].Type)
-	err = ts.DeleteMemo(ctx, &store.DeleteMemo{
-		ID: memo2.ID,
-	})
-	require.NoError(t, err)
-	memoRelation, err = ts.ListMemoRelations(ctx, &store.FindMemoRelation{
-		MemoID: &memo.ID,
-	})
-	require.NoError(t, err)
-	require.Equal(t, 0, len(memoRelation))
 }

@@ -21,7 +21,7 @@ const resourceSlice = createSlice({
     upsertResources: (state, action: PayloadAction<Resource[]>) => {
       return {
         ...state,
-        resources: uniqBy([...state.resources, ...action.payload], "id"),
+        resources: uniqBy([...action.payload, ...state.resources], "id"),
       };
     },
     patchResource: (state, action: PayloadAction<Partial<Resource>>) => {
@@ -39,17 +39,9 @@ const resourceSlice = createSlice({
         }),
       };
     },
-    deleteResource: (state, action: PayloadAction<ResourceId>) => {
-      return {
-        ...state,
-        resources: state.resources.filter((resource) => {
-          return resource.id !== action.payload;
-        }),
-      };
-    },
   },
 });
 
-export const { setResources, upsertResources, patchResource, deleteResource } = resourceSlice.actions;
+export const { setResources, upsertResources, patchResource } = resourceSlice.actions;
 
 export default resourceSlice.reducer;

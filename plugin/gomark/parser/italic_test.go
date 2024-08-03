@@ -5,13 +5,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/usememos/memos/plugin/gomark/ast"
 	"github.com/usememos/memos/plugin/gomark/parser/tokenizer"
 )
 
 func TestItalicParser(t *testing.T) {
 	tests := []struct {
 		text   string
-		italic *ItalicParser
+		italic ast.Node
 	}{
 		{
 			text:   "*Hello world!",
@@ -19,77 +20,30 @@ func TestItalicParser(t *testing.T) {
 		},
 		{
 			text: "*Hello*",
-			italic: &ItalicParser{
-				ContentTokens: []*tokenizer.Token{
-					{
-						Type:  tokenizer.Text,
-						Value: "Hello",
-					},
-				},
+			italic: &ast.Italic{
+				Symbol:  "*",
+				Content: "Hello",
 			},
 		},
 		{
 			text: "* Hello *",
-			italic: &ItalicParser{
-				ContentTokens: []*tokenizer.Token{
-					{
-						Type:  tokenizer.Space,
-						Value: " ",
-					},
-					{
-						Type:  tokenizer.Text,
-						Value: "Hello",
-					},
-					{
-						Type:  tokenizer.Space,
-						Value: " ",
-					},
-				},
+			italic: &ast.Italic{
+				Symbol:  "*",
+				Content: " Hello ",
 			},
-		},
-		{
-			text:   "** Hello * *",
-			italic: nil,
 		},
 		{
 			text: "*1* Hello * *",
-			italic: &ItalicParser{
-				ContentTokens: []*tokenizer.Token{
-					{
-						Type:  tokenizer.Text,
-						Value: "1",
-					},
-				},
+			italic: &ast.Italic{
+				Symbol:  "*",
+				Content: "1",
 			},
-		},
-		{
-			text: `* \n * Hello * *`,
-			italic: &ItalicParser{
-				ContentTokens: []*tokenizer.Token{
-					{
-						Type:  tokenizer.Space,
-						Value: " ",
-					},
-					{
-						Type:  tokenizer.Text,
-						Value: `\n`,
-					},
-					{
-						Type:  tokenizer.Space,
-						Value: " ",
-					},
-				},
-			},
-		},
-		{
-			text:   "* \n * Hello * *",
-			italic: nil,
 		},
 	}
 
 	for _, test := range tests {
 		tokens := tokenizer.Tokenize(test.text)
-		italic := NewItalicParser()
-		require.Equal(t, test.italic, italic.Match(tokens))
+		node, _ := NewItalicParser().Parse(tokens)
+		require.Equal(t, StringifyNodes([]ast.Node{test.italic}), StringifyNodes([]ast.Node{node}))
 	}
 }

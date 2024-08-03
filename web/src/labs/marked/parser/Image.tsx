@@ -1,7 +1,7 @@
 import { absolutifyLink } from "@/helpers/utils";
 import { matcher } from "../matcher";
 
-export const IMAGE_REG = /!\[.*?\]\((.+?)\)/;
+export const IMAGE_REG = /!\[.*\]\((.+)\)/;
 
 const renderer = (rawStr: string) => {
   const matchResult = matcher(rawStr, IMAGE_REG);

@@ -2,33 +2,16 @@ package v2
 
 import (
 	"context"
-	"os"
 	"strconv"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	apiv2pb "github.com/usememos/memos/proto/gen/api/v2"
-	"github.com/usememos/memos/server/profile"
 	"github.com/usememos/memos/store"
 )
 
-type SystemService struct {
-	apiv2pb.UnimplementedSystemServiceServer
-
-	Profile *profile.Profile
-	Store   *store.Store
-}
-
-// NewSystemService creates a new SystemService.
-func NewSystemService(profile *profile.Profile, store *store.Store) *SystemService {
-	return &SystemService{
-		Profile: profile,
-		Store:   store,
-	}
-}
-
-func (s *SystemService) GetSystemInfo(ctx context.Context, _ *apiv2pb.GetSystemInfoRequest) (*apiv2pb.GetSystemInfoResponse, error) {
+func (s *APIV2Service) GetSystemInfo(ctx context.Context, _ *apiv2pb.GetSystemInfoRequest) (*apiv2pb.GetSystemInfoResponse, error) {
 	defaultSystemInfo := &apiv2pb.SystemInfo{}
 
 	// Get the database size if the user is a host.
@@ -37,11 +20,11 @@ func (s *SystemService) GetSystemInfo(ctx context.Context, _ *apiv2pb.GetSystemI
 		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
 	}
 	if currentUser != nil && currentUser.Role == store.RoleHost {
-		fi, err := os.Stat(s.Profile.DSN)
+		size, err := s.Store.GetCurrentDBSize(ctx)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get file info: %v", err)
+			return nil, status.Errorf(codes.Internal, "failed to get db size: %v", err)
 		}
-		defaultSystemInfo.DbSize = fi.Size()
+		defaultSystemInfo.DbSize = size
 	}
 
 	response := &apiv2pb.GetSystemInfoResponse{
@@ -50,7 +33,7 @@ func (s *SystemService) GetSystemInfo(ctx context.Context, _ *apiv2pb.GetSystemI
 	return response, nil
 }
 
-func (s *SystemService) UpdateSystemInfo(ctx context.Context, request *apiv2pb.UpdateSystemInfoRequest) (*apiv2pb.UpdateSystemInfoResponse, error) {
+func (s *APIV2Service) UpdateSystemInfo(ctx context.Context, request *apiv2pb.UpdateSystemInfoRequest) (*apiv2pb.UpdateSystemInfoResponse, error) {
 	user, err := getCurrentUser(ctx, s.Store)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
@@ -58,13 +41,13 @@ func (s *SystemService) UpdateSystemInfo(ctx context.Context, request *apiv2pb.U
 	if user.Role != store.RoleHost {
 		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
 	}
-	if request.UpdateMask == nil || len(request.UpdateMask) == 0 {
+	if request.UpdateMask == nil || len(request.UpdateMask.Paths) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "update mask is required")
 	}
 
 	// Update system settings.
-	for _, path := range request.UpdateMask {
-		if path == "allow_registration" {
+	for _, field := range request.UpdateMask.Paths {
+		if field == "allow_registration" {
 			_, err := s.Store.UpsertSystemSetting(ctx, &store.SystemSetting{
 				Name:  "allow-signup",
 				Value: strconv.FormatBool(request.SystemInfo.AllowRegistration),
@@ -72,7 +55,7 @@ func (s *SystemService) UpdateSystemInfo(ctx context.Context, request *apiv2pb.U
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to update allow_registration system setting: %v", err)
 			}
-		} else if path == "disable_password_login" {
+		} else if field == "disable_password_login" {
 			_, err := s.Store.UpsertSystemSetting(ctx, &store.SystemSetting{
 				Name:  "disable-password-login",
 				Value: strconv.FormatBool(request.SystemInfo.DisablePasswordLogin),
@@ -80,7 +63,7 @@ func (s *SystemService) UpdateSystemInfo(ctx context.Context, request *apiv2pb.U
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to update disable_password_login system setting: %v", err)
 			}
-		} else if path == "additional_script" {
+		} else if field == "additional_script" {
 			_, err := s.Store.UpsertSystemSetting(ctx, &store.SystemSetting{
 				Name:  "additional-script",
 				Value: request.SystemInfo.AdditionalScript,
@@ -88,7 +71,7 @@ func (s *SystemService) UpdateSystemInfo(ctx context.Context, request *apiv2pb.U
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to update additional_script system setting: %v", err)
 			}
-		} else if path == "additional_style" {
+		} else if field == "additional_style" {
 			_, err := s.Store.UpsertSystemSetting(ctx, &store.SystemSetting{
 				Name:  "additional-style",
 				Value: request.SystemInfo.AdditionalStyle,

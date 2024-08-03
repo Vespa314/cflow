@@ -74,6 +74,14 @@ if [ $? -ne 0 ]; then
 fi
 echo -e "\033[32mFrontend dependencies installed!\033[0m"
 
+echo -e "\n\033[33mGenerating buf types...\033[0m"
+pnpm type-gen
+if [ $? -ne 0 ]; then
+    echo -e "\033[0;31mCould not generate buf types! Exiting.\033[0m"
+    exit 1
+fi
+echo -e "\033[32mbuf types generated!\033[0m"
+
 echo -e "\n\033[33mBuilding frontend...\033[0m"
 pnpm build
 if [ $? -ne 0 ]; then
@@ -110,10 +118,10 @@ for build in "${goBuilds[@]}"; do
         output="$output.exe"
     fi
     
-    CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -trimpath -ldflags="${ldFlags[*]}" -o "$output" ./main.go
+    CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -trimpath -ldflags="${ldFlags[*]}" -o "$output" ./bin/memos/main.go
 
     echo -e "\033[34mBuilding $os/$arch to $output...\033[0m"
-    GOOS=$os GOARCH=$arch go build -ldflags="${ldFlags[*]}" -o "./build/memos-$os-$arch" ./main.go
+    GOOS=$os GOARCH=$arch go build -ldflags="${ldFlags[*]}" -o "./build/memos-$os-$arch" ./bin/memos/main.go
     if [ $? -ne 0 ]; then
         echo -e "\033[0;31mgo build failed for $os/$arch($output)! See above.\033[0m"
     fi

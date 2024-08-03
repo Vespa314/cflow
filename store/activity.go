@@ -2,7 +2,30 @@ package store
 
 import (
 	"context"
+
+	storepb "github.com/usememos/memos/proto/gen/store"
 )
+
+type ActivityType string
+
+const (
+	ActivityTypeMemoComment   ActivityType = "MEMO_COMMENT"
+	ActivityTypeVersionUpdate ActivityType = "VERSION_UPDATE"
+)
+
+func (t ActivityType) String() string {
+	return string(t)
+}
+
+type ActivityLevel string
+
+const (
+	ActivityLevelInfo ActivityLevel = "INFO"
+)
+
+func (l ActivityLevel) String() string {
+	return string(l)
+}
 
 type Activity struct {
 	ID int32
@@ -12,29 +35,31 @@ type Activity struct {
 	CreatedTs int64
 
 	// Domain specific fields
-	Type    string
-	Level   string
-	Payload string
+	Type    ActivityType
+	Level   ActivityLevel
+	Payload *storepb.ActivityPayload
+}
+
+type FindActivity struct {
+	ID   *int32
+	Type *ActivityType
 }
 
 func (s *Store) CreateActivity(ctx context.Context, create *Activity) (*Activity, error) {
-	stmt := `
-		INSERT INTO activity (
-			creator_id, 
-			type, 
-			level, 
-			payload
-		)
-		VALUES (?, ?, ?, ?)
-		RETURNING id, created_ts
-	`
-	if err := s.db.QueryRowContext(ctx, stmt, create.CreatorID, create.Type, create.Level, create.Payload).Scan(
-		&create.ID,
-		&create.CreatedTs,
-	); err != nil {
+	return s.driver.CreateActivity(ctx, create)
+}
+
+func (s *Store) ListActivities(ctx context.Context, find *FindActivity) ([]*Activity, error) {
+	return s.driver.ListActivities(ctx, find)
+}
+
+func (s *Store) GetActivity(ctx context.Context, find *FindActivity) (*Activity, error) {
+	list, err := s.ListActivities(ctx, find)
+	if err != nil {
 		return nil, err
 	}
-
-	activity := create
-	return activity, nil
+	if len(list) == 0 {
+		return nil, nil
+	}
+	return list[0], nil
 }

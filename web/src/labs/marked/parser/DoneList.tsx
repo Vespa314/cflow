@@ -17,7 +17,7 @@ const renderer = (rawStr: string) => {
       <span className="todo-block done" data-value="DONE">
         ✓
       </span>
-      <span>{parsedContent}</span>
+      <span className="task_checked">{parsedContent}</span>
     </p>
   );
 };

@@ -1,6 +1,4 @@
-import { Tooltip } from "@mui/joy";
 import { toast } from "react-hot-toast";
-import { getDateTimeString } from "@/helpers/datetime";
 import { useMemoStore } from "@/store/module";
 import { useTranslate } from "@/utils/i18n";
 import { showCommonDialog } from "./Dialog/CommonDialog";
@@ -22,7 +20,7 @@ const ArchivedMemo: React.FC<Props> = (props: Props) => {
     showCommonDialog({
       title: t("memo.delete-memo"),
       content: t("memo.delete-confirm"),
-      style: "warning",
+      style: "danger",
       dialogName: "delete-memo-dialog",
       onConfirm: async () => {
         await memoStore.deleteMemoById(memo.id);
@@ -47,20 +45,16 @@ const ArchivedMemo: React.FC<Props> = (props: Props) => {
   return (
     <div className={`memo-wrapper archived ${"memos-" + memo.id}`}>
       <div className="memo-top-wrapper">
-        <div className="status-text-container">
-          <span className="time-text">{getDateTimeString(memo.updatedTs)}</span>
+        <div className="w-full max-w-[calc(100%-20px)] flex flex-row justify-start items-center mr-1">
+          <span className="text-sm text-gray-500">#{memo.id}</span>
         </div>
         <div className="flex flex-row justify-end items-center gap-x-2">
-          <Tooltip title={t("common.restore")} placement="top">
-            <button onClick={handleRestoreMemoClick}>
-              <Icon.ArchiveRestore className="w-4 h-auto cursor-pointer text-gray-500 dark:text-gray-400" />
-            </button>
-          </Tooltip>
-          <Tooltip title={t("common.delete")} placement="top">
-            <button onClick={handleDeleteMemoClick} className="text-gray-500 dark:text-gray-400">
-              <Icon.Trash className="w-4 h-auto cursor-pointer" />
-            </button>
-          </Tooltip>
+          <button onClick={handleRestoreMemoClick}>
+            <Icon.ArchiveRestore className="w-4 h-auto cursor-pointer text-gray-500" />
+          </button>
+          <button onClick={handleDeleteMemoClick} className="text-gray-500">
+            <Icon.Trash className="w-4 h-auto cursor-pointer" />
+          </button>
         </div>
       </div>
       <MemoContent content={memo.content} />

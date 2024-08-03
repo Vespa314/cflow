@@ -7,16 +7,20 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/usememos/memos/common/util"
+	"github.com/usememos/memos/internal/util"
 	"github.com/usememos/memos/store"
 )
 
 type MemoRelationType string
 
 const (
-	MemoRelationReference  MemoRelationType = "REFERENCE"
-	MemoRelationAdditional MemoRelationType = "ADDITIONAL"
+	MemoRelationReference MemoRelationType = "REFERENCE"
+	MemoRelationComment   MemoRelationType = "COMMENT"
 )
+
+func (t MemoRelationType) String() string {
+	return string(t)
+}
 
 type MemoRelation struct {
 	MemoID        int32            `json:"memoId"`

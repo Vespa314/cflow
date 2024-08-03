@@ -1,12 +1,12 @@
 import { Button } from "@mui/joy";
 import copy from "copy-to-clipboard";
-import { QRCodeSVG } from "qrcode.react";
 import React, { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
+import { QRCodeSVG } from "qrcode.react";
 import { getDateTimeString } from "@/helpers/datetime";
 import useLoading from "@/hooks/useLoading";
 import toImage from "@/labs/html2image";
-import { useUserV1Store } from "@/store/v1";
+import { useUserV1Store, extractUsernameFromName } from "@/store/v1";
 import { useTranslate } from "@/utils/i18n";
 import { generateDialog } from "./Dialog";
 import showEmbedMemoDialog from "./EmbedMemoDialog";
@@ -106,7 +106,7 @@ const ShareMemoDialog: React.FC<Props> = (props: Props) => {
             {t("common.link")}
           </Button>
         </div>
-        <div className="w-full rounded-lg border-t overflow-clip">
+        <div className="w-full border-t dark:border-zinc-700 overflow-clip">
           <div
             className="w-full h-auto select-none relative flex flex-col justify-start items-start bg-white dark:bg-zinc-800"
             ref={memoElRef}
@@ -114,20 +114,27 @@ const ShareMemoDialog: React.FC<Props> = (props: Props) => {
             <span className="w-full px-6 pt-5 pb-2 text-sm text-gray-500">{memo.displayTsStr}</span>
             <div className="w-full px-6 text-base pb-4">
               <MemoContent content={memo.content} />
-              <MemoResourceListView className="!grid-cols-2" resourceList={memo.resourceList} />
+              <MemoResourceListView resourceList={memo.resourceList} />
             </div>
             <div className="flex flex-row justify-between items-center w-full bg-gray-100 dark:bg-zinc-700 py-4 px-6">
-              <UserAvatar className="mr-2" avatarUrl={user.avatarUrl} />
-              <div className="w-auto grow truncate flex mr-2 flex-col justify-center items-start">
-                <span className="w-full text-sm truncate font-bold text-gray-600 dark:text-gray-300">{user.nickname || user.username}</span>
+              <div className="flex flex-row justify-start items-center">
+                <UserAvatar className="mr-2" avatarUrl={user.avatarUrl} />
+                <div className="w-auto grow truncate flex mr-2 flex-col justify-center items-start">
+                  <span className="w-full text truncate font-medium text-gray-600 dark:text-gray-300">
+                    {user.nickname || extractUsernameFromName(user.name)}
+                  </span>
+                </div>
               </div>
-              <QRCodeSVG
-                value={`${window.location.origin}/m/${memo.id}`}
-                size={28}
-                bgColor={"#F3F4F6"}
-                fgColor={"#4B5563"}
-                includeMargin={false}
-              />
+              <div className="flex justify-center items-center">
+              <span className="text-gray-500 dark:text-gray-400 pr-2">via cflow</span>
+                <QRCodeSVG
+                  value={`${window.location.origin}/m/${memo.id}`}
+                  size={32}
+                  bgColor={"#F3F4F6"}
+                  fgColor={"#4B5563"}
+                  includeMargin={false}
+                />
+              </div>
             </div>
           </div>
         </div>

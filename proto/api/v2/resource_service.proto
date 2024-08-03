@@ -3,13 +3,29 @@ syntax = "proto3";
 package memos.api.v2;
 
 import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "gen/api/v2";
 
 service ResourceService {
+  rpc CreateResource(CreateResourceRequest) returns (CreateResourceResponse) {
+    option (google.api.http) = {post: "/api/v2/resources"};
+  }
   rpc ListResources(ListResourcesRequest) returns (ListResourcesResponse) {
     option (google.api.http) = {get: "/api/v2/resources"};
+  }
+  rpc UpdateResource(UpdateResourceRequest) returns (UpdateResourceResponse) {
+    option (google.api.http) = {
+      patch: "/api/v2/resources/{resource.id}",
+      body: "resource"
+    };
+    option (google.api.method_signature) = "resource,update_mask";
+  }
+  rpc DeleteResource(DeleteResourceRequest) returns (DeleteResourceResponse) {
+    option (google.api.http) = {get: "/api/v2/resources/{id}"};
+    option (google.api.method_signature) = "id";
   }
 }
 
@@ -20,7 +36,18 @@ message Resource {
   string external_link = 4;
   string type = 5;
   int64 size = 6;
-  optional int32 related_memo_id = 7;
+  optional int32 memo_id = 7;
+}
+
+message CreateResourceRequest {
+  string filename = 1;
+  string external_link = 2;
+  string type = 3;
+  optional int32 memo_id = 4;
+}
+
+message CreateResourceResponse {
+  Resource resource = 1;
 }
 
 message ListResourcesRequest {}
@@ -28,3 +55,19 @@ message ListResourcesRequest {}
 message ListResourcesResponse {
   repeated Resource resources = 1;
 }
+
+message UpdateResourceRequest {
+  Resource resource = 1;
+
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateResourceResponse {
+  Resource resource = 1;
+}
+
+message DeleteResourceRequest {
+  int32 id = 1;
+}
+
+message DeleteResourceResponse {}

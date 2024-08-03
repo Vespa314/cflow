@@ -1,21 +1,24 @@
 import HomeSidebar from "@/components/HomeSidebar";
+import HomeSidebarDrawer from "@/components/HomeSidebarDrawer";
 import MemoEditor from "@/components/MemoEditor";
-import MemoFilter from "@/components/MemoFilter";
 import MemoList from "@/components/MemoList";
 import MobileHeader from "@/components/MobileHeader";
+import useResponsiveWidth from "@/hooks/useResponsiveWidth";
 
 const Home = () => {
+  const { md } = useResponsiveWidth();
   return (
     <div className="w-full flex flex-row justify-start items-start">
-      <div className="flex-grow shrink w-auto px-4 sm:px-2 sm:pt-4">
-        <MobileHeader />
-        <div className="w-full h-auto flex flex-col justify-start items-start bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-          <MemoEditor className="mb-2" />
-          <MemoFilter />
-        </div>
+      <div className="w-full px-4 md:max-w-[calc(100%-14rem)] sm:px-2 sm:pt-4">
+        <MobileHeader>{!md && <HomeSidebarDrawer />}</MobileHeader>
+        <MemoEditor className="mb-2" cacheKey="home-memo-editor" />
         <MemoList />
       </div>
-      <HomeSidebar />
+      {md && (
+        <div className="hidden md:block sticky top-0 left-0 w-56">
+          <HomeSidebar />
+        </div>
+      )}
     </div>
   );
 };

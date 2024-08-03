@@ -1,20 +1,20 @@
 import { Option, Select } from "@mui/joy";
 import { useState } from "react";
-import BetaBadge from "@/components/BetaBadge";
 import Icon from "@/components/Icon";
 import MobileHeader from "@/components/MobileHeader";
 import MemberSection from "@/components/Settings/MemberSection";
 import MyAccountSection from "@/components/Settings/MyAccountSection";
 import PreferencesSection from "@/components/Settings/PreferencesSection";
-import SSOSection from "@/components/Settings/SSOSection";
 import StorageSection from "@/components/Settings/StorageSection";
 import SystemSection from "@/components/Settings/SystemSection";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import EditorSection from "@/components/Settings/EditorSection";
+import MemoSection from "@/components/Settings/MemoSection";
 import { User_Role } from "@/types/proto/api/v2/user_service";
 import { useTranslate } from "@/utils/i18n";
 import "@/less/setting.less";
 
-type SettingSection = "my-account" | "preference" | "member" | "system" | "storage" | "sso";
+type SettingSection = "my-account" | "preference" | "editor" | "member" | "system" | "storage" | "sso" | "memo";
 
 interface State {
   selectedSection: SettingSection;
@@ -36,7 +36,7 @@ const Setting = () => {
   };
 
   const getSettingSectionList = () => {
-    let settingList: SettingSection[] = ["my-account", "preference"];
+    let settingList: SettingSection[] = ["my-account", "preference", "editor", "memo"];
     if (isHost) {
       settingList = settingList.concat(["member", "system", "storage", "sso"]);
     }
@@ -44,8 +44,8 @@ const Setting = () => {
   };
 
   return (
-    <section className="w-full max-w-3xl min-h-full flex flex-col md:flex-row justify-start items-start px-4 sm:px-2 sm:pt-4 pb-8 bg-zinc-100 dark:bg-zinc-800">
-      <MobileHeader showSearch={false} />
+    <section className="@container w-full max-w-3xl min-h-full flex flex-col justify-start items-start px-4 sm:px-2 sm:pt-4 pb-8 bg-zinc-100 dark:bg-zinc-800">
+      <MobileHeader />
       <div className="setting-page-wrapper">
         <div className="section-selector-container">
           <span className="section-title">{t("common.basic")}</span>
@@ -61,6 +61,18 @@ const Setting = () => {
               className={`section-item ${state.selectedSection === "preference" ? "selected" : ""}`}
             >
               <Icon.Cog className="w-4 h-auto mr-2 opacity-80" /> {t("setting.preference")}
+            </span>
+            <span
+              onClick={() => handleSectionSelectorItemClick("editor")}
+              className={`section-item ${state.selectedSection === "editor" ? "selected" : ""}`}
+            >
+              <Icon.Edit className="w-4 h-auto mr-2 opacity-80" /> {t("setting.editor")}
+            </span>
+            <span
+              onClick={() => handleSectionSelectorItemClick("memo")}
+              className={`section-item ${state.selectedSection === "memo" ? "selected" : ""}`}
+            >
+              <Icon.AppWindow className="w-4 h-auto mr-2 opacity-80" /> {t("setting.memo")}
             </span>
           </div>
           {isHost ? (
@@ -83,14 +95,8 @@ const Setting = () => {
                   onClick={() => handleSectionSelectorItemClick("storage")}
                   className={`section-item ${state.selectedSection === "storage" ? "selected" : ""}`}
                 >
-                  <Icon.Database className="w-4 h-auto mr-2 opacity-80" /> {t("setting.storage")} <BetaBadge />
+                  <Icon.Database className="w-4 h-auto mr-2 opacity-80" /> {t("setting.storage")}
                 </span>
-                {/* <span
-                  onClick={() => handleSectionSelectorItemClick("sso")}
-                  className={`section-item ${state.selectedSection === "sso" ? "selected" : ""}`}
-                >
-                  <Icon.Key className="w-4 h-auto mr-2 opacity-80" /> {t("setting.sso")} <BetaBadge />
-                </span> */}
               </div>
             </>
           ) : null}
@@ -117,8 +123,10 @@ const Setting = () => {
             <SystemSection />
           ) : state.selectedSection === "storage" ? (
             <StorageSection />
-          ) : state.selectedSection === "sso" ? (
-            <SSOSection />
+          ) : state.selectedSection === "editor" ? (
+            <EditorSection />
+          ) : state.selectedSection === "memo" ? (
+            <MemoSection />
           ) : null}
         </div>
       </div>

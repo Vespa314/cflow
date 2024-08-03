@@ -1,4 +1,4 @@
-type MemoRelationType = "REFERENCE" | "ADDITIONAL" | "REFERENCED";
+type MemoRelationType = "REFERENCE" | "ADDITIONAL" | "COMMENT";
 
 interface MemoRelation {
   memoId: MemoId;

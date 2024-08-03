@@ -9,11 +9,14 @@ interface Setting {
   appearance: Appearance;
   memoVisibility: Visibility;
   telegramUserId: string;
+  openaiApiKey: string;
+  scriptConfig: string;
 }
 
 interface LocalSetting {
   enableDoubleClickEditing: boolean;
-  dailyReviewTimeOffset: number;
+  enableShowWordCnt: boolean
+  markWithTag: boolean;
 }
 
 interface UserLocaleSetting {
@@ -36,7 +39,17 @@ interface UserTelegramUserIdSetting {
   value: string;
 }
 
-type UserSetting = UserLocaleSetting | UserAppearanceSetting | UserMemoVisibilitySetting | UserTelegramUserIdSetting;
+interface UserOpenAIKeyIdSetting {
+  key: "openai-api-key";
+  value: string;
+}
+
+interface UserScriptConfigSetting {
+  key: "script-config";
+  value: string;
+}
+
+type UserSetting = UserLocaleSetting | UserAppearanceSetting | UserMemoVisibilitySetting | UserTelegramUserIdSetting | UserOpenAIKeyIdSetting | UserScriptConfigSetting;
 
 interface UserSettingUpsert {
   key: keyof Setting;

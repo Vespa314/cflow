@@ -1,6 +1,9 @@
 import { useRef } from "react";
 import { marked } from "@/labs/marked";
+import { useFilterStore } from "@/store/module";
+import highlightText from "@/labs/marked/parser/SearchHighLight";
 import "@/less/memo-content.less";
+
 
 interface Props {
   content: string;
@@ -12,6 +15,10 @@ interface Props {
 const MemoContent: React.FC<Props> = (props: Props) => {
   const { className, content, onMemoContentClick, onMemoContentDoubleClick } = props;
   const memoContentContainerRef = useRef<HTMLDivElement>(null);
+
+  const filterStore = useFilterStore();
+  const filter = filterStore.state;
+  const { text: textQuery} = filter;
 
   const handleMemoContentClick = async (e: React.MouseEvent) => {
     if (onMemoContentClick) {
@@ -33,7 +40,7 @@ const MemoContent: React.FC<Props> = (props: Props) => {
         onClick={handleMemoContentClick}
         onDoubleClick={handleMemoContentDoubleClick}
       >
-        {marked(content)}
+        {textQuery ? highlightText(marked(content), textQuery) : marked(content)}
       </div>
     </div>
   );

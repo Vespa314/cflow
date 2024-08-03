@@ -1,15 +1,17 @@
-import { forwardRef, ReactNode, useCallback, useEffect, useImperativeHandle, useRef } from "react";
+import classNames from "classnames";
+import { forwardRef, ReactNode, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import TagSuggestions from "./TagSuggestions";
-import "@/less/editor.less";
 
 export interface EditorRefActions {
   focus: FunctionType;
+  blur: FunctionType;
   scrollToCursor: FunctionType;
   insertText: (text: string, prefix?: string, suffix?: string) => void;
   removeText: (start: number, length: number) => void;
   setContent: (text: string) => void;
   getContent: () => string;
   getSelectedContent: () => string;
+  setSelectedContent: (startPos: number, endPos?: number) => void;
   getCursorPosition: () => number;
   setCursorPosition: (startPos: number, endPos?: number) => void;
   getCursorLineNumber: () => number;
@@ -22,12 +24,13 @@ interface Props {
   initialContent: string;
   placeholder: string;
   tools?: ReactNode;
+  fullscreen: boolean;
   onContentChange: (content: string) => void;
   onPaste: (event: React.ClipboardEvent) => void;
 }
 
 const Editor = forwardRef(function Editor(props: Props, ref: React.ForwardedRef<EditorRefActions>) {
-  const { className, initialContent, placeholder, onPaste, onContentChange: handleContentChangeCallback } = props;
+  const { className, initialContent, placeholder, fullscreen, onPaste, onContentChange: handleContentChangeCallback } = props;
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -38,10 +41,18 @@ const Editor = forwardRef(function Editor(props: Props, ref: React.ForwardedRef<
   }, []);
 
   useEffect(() => {
-    if (editorRef.current) {
-      updateEditorHeight();
+  }, [editorRef.current?.value, fullscreen]);
+
+  useEffect(() => {
+    if (!fullscreen) {
+      return;
     }
-  }, [editorRef.current?.value]);
+    const parent = editorRef.current?.parentElement;
+    if (!parent) {
+      return;
+    }
+  }, [fullscreen]);
+
 
   const updateEditorHeight = () => {
     if (editorRef.current) {
@@ -55,6 +66,9 @@ const Editor = forwardRef(function Editor(props: Props, ref: React.ForwardedRef<
     () => ({
       focus: () => {
         editorRef.current?.focus();
+      },
+      blur: () => {
+        editorRef.current?.blur();
       },
       scrollToCursor: () => {
         if (editorRef.current) {
@@ -98,7 +112,6 @@ const Editor = forwardRef(function Editor(props: Props, ref: React.ForwardedRef<
       setContent: (text: string) => {
         if (editorRef.current) {
           editorRef.current.value = text;
-          editorRef.current.focus();
           handleContentChangeCallback(editorRef.current.value);
           updateEditorHeight();
         }
@@ -113,6 +126,10 @@ const Editor = forwardRef(function Editor(props: Props, ref: React.ForwardedRef<
         const start = editorRef.current?.selectionStart;
         const end = editorRef.current?.selectionEnd;
         return editorRef.current?.value.slice(start, end) ?? "";
+      },
+      setSelectedContent: (startPos: number, endPos?: number) => {
+        const _endPos = isNaN(endPos as number) ? startPos : (endPos as number);
+        editorRef.current?.setSelectionRange(startPos, _endPos);
       },
       setCursorPosition: (startPos: number, endPos?: number) => {
         const _endPos = isNaN(endPos as number) ? startPos : (endPos as number);
@@ -146,9 +163,10 @@ const Editor = forwardRef(function Editor(props: Props, ref: React.ForwardedRef<
   }, []);
 
   return (
-    <div className={"common-editor-wrapper " + className}>
+    <div className={classNames("flex flex-col justify-start items-start relative w-full h-auto bg-inherit dark:text-gray-200", className)}>
       <textarea
-        className="common-editor-inputer"
+        className="w-full h-full my-1 text-base resize-none overflow-x-hidden overflow-y-auto bg-transparent outline-none whitespace-pre-wrap word-break"
+        style={{ maxHeight: '600px' }}
         rows={1}
         placeholder={placeholder}
         ref={editorRef}

@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/usememos/memos/common/log"
+	"github.com/usememos/memos/internal/log"
 	"github.com/usememos/memos/server/profile"
 	"github.com/usememos/memos/store"
 )
@@ -72,26 +72,20 @@ func (s *APIV1Service) GetSystemStatus(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	systemStatus := SystemStatus{
-		Profile:              *s.Profile,
-		DBSize:               0,
-		AllowSignUp:          false,
-		DisablePasswordLogin: false,
-		DisablePublicMemos:   false,
-		MaxUploadSizeMiB:     32,
-		AutoBackupInterval:   0,
-		AdditionalStyle:      "",
-		AdditionalScript:     "",
-		CustomizedProfile: CustomizedProfile{
-			Name:        "memos",
-			LogoURL:     "",
-			Description: "",
-			Locale:      "en",
-			Appearance:  "system",
-			ExternalURL: "",
+		Profile: profile.Profile{
+			Mode:    s.Profile.Mode,
+			Version: s.Profile.Version,
 		},
-		StorageServiceID:         LocalStorage,
-		LocalStoragePath:         "assets/{timestamp}_{filename}",
-		MemoDisplayWithUpdatedTs: false,
+		// Allow sign up by default.
+		AllowSignUp:      true,
+		MaxUploadSizeMiB: 32,
+		CustomizedProfile: CustomizedProfile{
+			Name:       "cflow",
+			Locale:     "zh-Hans",
+			Appearance: "system",
+		},
+		StorageServiceID: DefaultStorage,
+		LocalStoragePath: "assets/{timestamp}_{filename}",
 	}
 
 	hostUserType := store.RoleHost
@@ -110,7 +104,7 @@ func (s *APIV1Service) GetSystemStatus(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find system setting list").SetInternal(err)
 	}
 	for _, systemSetting := range systemSettingList {
-		if systemSetting.Name == SystemSettingServerIDName.String() || systemSetting.Name == SystemSettingSecretSessionName.String() || systemSetting.Name == SystemSettingTelegramBotTokenName.String() {
+		if systemSetting.Name == SystemSettingServerIDName.String() || systemSetting.Name == SystemSettingSecretSessionName.String() || systemSetting.Name == SystemSettingTelegramBotTokenName.String() || systemSetting.Name == SystemSettingWebhookUrlName.String() {
 			continue
 		}
 

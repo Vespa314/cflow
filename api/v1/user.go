@@ -11,7 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/usememos/memos/common/util"
+	"github.com/usememos/memos/internal/util"
+	"github.com/usememos/memos/server/service/metric"
 	"github.com/usememos/memos/store"
 )
 
@@ -40,13 +41,12 @@ type User struct {
 	UpdatedTs int64     `json:"updatedTs"`
 
 	// Domain specific fields
-	Username        string         `json:"username"`
-	Role            Role           `json:"role"`
-	Email           string         `json:"email"`
-	Nickname        string         `json:"nickname"`
-	PasswordHash    string         `json:"-"`
-	AvatarURL       string         `json:"avatarUrl"`
-	UserSettingList []*UserSetting `json:"userSettingList"`
+	Username     string `json:"username"`
+	Role         Role   `json:"role"`
+	Email        string `json:"email"`
+	Nickname     string `json:"nickname"`
+	PasswordHash string `json:"-"`
+	AvatarURL    string `json:"avatarUrl"`
 }
 
 type CreateUserRequest struct {
@@ -87,6 +87,23 @@ func (s *APIV1Service) registerUserRoutes(g *echo.Group) {
 //	@Router		/api/v1/user [GET]
 func (s *APIV1Service) GetUserList(c echo.Context) error {
 	ctx := c.Request().Context()
+	userID, ok := c.Get(userIDContextKey).(int32)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Missing auth session")
+	}
+	currentUser, err := s.Store.GetUser(ctx, &store.FindUser{
+		ID: &userID,
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find user by id").SetInternal(err)
+	}
+	if currentUser == nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Missing auth session")
+	}
+	if currentUser.Role != store.RoleHost && currentUser.Role != store.RoleAdmin {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized to list users")
+	}
+
 	list, err := s.Store.ListUsers(ctx, &store.FindUser{})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch user list").SetInternal(err)
@@ -95,7 +112,6 @@ func (s *APIV1Service) GetUserList(c echo.Context) error {
 	userMessageList := make([]*User, 0, len(list))
 	for _, user := range list {
 		userMessage := convertUserFromStore(user)
-		// data desensitize
 		userMessage.Email = ""
 		userMessageList = append(userMessageList, userMessage)
 	}
@@ -166,9 +182,7 @@ func (s *APIV1Service) CreateUser(c echo.Context) error {
 	}
 
 	userMessage := convertUserFromStore(user)
-	if err := s.createUserCreateActivity(c, userMessage); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create activity").SetInternal(err)
-	}
+	metric.Enqueue("user create")
 	return c.JSON(http.StatusOK, userMessage)
 }
 
@@ -196,18 +210,7 @@ func (s *APIV1Service) GetCurrentUser(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Missing auth session")
 	}
 
-	list, err := s.Store.ListUserSettings(ctx, &store.FindUserSetting{
-		UserID: &userID,
-	})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find userSettingList").SetInternal(err)
-	}
-	userSettingList := []*UserSetting{}
-	for _, userSetting := range list {
-		userSettingList = append(userSettingList, convertUserSettingFromStore(userSetting))
-	}
 	userMessage := convertUserFromStore(user)
-	userMessage.UserSettingList = userSettingList
 	return c.JSON(http.StatusOK, userMessage)
 }
 
@@ -265,8 +268,12 @@ func (s *APIV1Service) GetUserByID(c echo.Context) error {
 	}
 
 	userMessage := convertUserFromStore(user)
-	// data desensitize
-	userMessage.Email = ""
+	userID, ok := c.Get(userIDContextKey).(int32)
+	if !ok || userID != user.ID {
+		// Data desensitize.
+		userMessage.Email = ""
+	}
+
 	return c.JSON(http.StatusOK, userMessage)
 }
 
@@ -395,43 +402,32 @@ func (s *APIV1Service) UpdateUser(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to patch user").SetInternal(err)
 	}
 
-	list, err := s.Store.ListUserSettings(ctx, &store.FindUserSetting{
-		UserID: &userID,
-	})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find userSettingList").SetInternal(err)
-	}
-	userSettingList := []*UserSetting{}
-	for _, userSetting := range list {
-		userSettingList = append(userSettingList, convertUserSettingFromStore(userSetting))
-	}
 	userMessage := convertUserFromStore(user)
-	userMessage.UserSettingList = userSettingList
 	return c.JSON(http.StatusOK, userMessage)
 }
 
 func (create CreateUserRequest) Validate() error {
 	if len(create.Username) < 3 {
-		return errors.Errorf("username is too short, minimum length is 3")
+		return errors.New("username is too short, minimum length is 3")
 	}
 	if len(create.Username) > 32 {
-		return errors.Errorf("username is too long, maximum length is 32")
+		return errors.New("username is too long, maximum length is 32")
 	}
 	if len(create.Password) < 3 {
-		return errors.Errorf("password is too short, minimum length is 3")
+		return errors.New("password is too short, minimum length is 3")
 	}
 	if len(create.Password) > 512 {
-		return errors.Errorf("password is too long, maximum length is 512")
+		return errors.New("password is too long, maximum length is 512")
 	}
 	if len(create.Nickname) > 64 {
-		return errors.Errorf("nickname is too long, maximum length is 64")
+		return errors.New("nickname is too long, maximum length is 64")
 	}
 	if create.Email != "" {
 		if len(create.Email) > 256 {
-			return errors.Errorf("email is too long, maximum length is 256")
+			return errors.New("email is too long, maximum length is 256")
 		}
 		if !util.ValidateEmail(create.Email) {
-			return errors.Errorf("invalid email format")
+			return errors.New("invalid email format")
 		}
 	}
 
@@ -440,58 +436,35 @@ func (create CreateUserRequest) Validate() error {
 
 func (update UpdateUserRequest) Validate() error {
 	if update.Username != nil && len(*update.Username) < 3 {
-		return errors.Errorf("username is too short, minimum length is 3")
+		return errors.New("username is too short, minimum length is 3")
 	}
 	if update.Username != nil && len(*update.Username) > 32 {
-		return errors.Errorf("username is too long, maximum length is 32")
+		return errors.New("username is too long, maximum length is 32")
 	}
 	if update.Password != nil && len(*update.Password) < 3 {
-		return errors.Errorf("password is too short, minimum length is 3")
+		return errors.New("password is too short, minimum length is 3")
 	}
 	if update.Password != nil && len(*update.Password) > 512 {
-		return errors.Errorf("password is too long, maximum length is 512")
+		return errors.New("password is too long, maximum length is 512")
 	}
 	if update.Nickname != nil && len(*update.Nickname) > 64 {
-		return errors.Errorf("nickname is too long, maximum length is 64")
+		return errors.New("nickname is too long, maximum length is 64")
 	}
 	if update.AvatarURL != nil {
 		if len(*update.AvatarURL) > 2<<20 {
-			return errors.Errorf("avatar is too large, maximum is 2MB")
+			return errors.New("avatar is too large, maximum is 2MB")
 		}
 	}
 	if update.Email != nil && *update.Email != "" {
 		if len(*update.Email) > 256 {
-			return errors.Errorf("email is too long, maximum length is 256")
+			return errors.New("email is too long, maximum length is 256")
 		}
 		if !util.ValidateEmail(*update.Email) {
-			return errors.Errorf("invalid email format")
+			return errors.New("invalid email format")
 		}
 	}
 
 	return nil
-}
-
-func (s *APIV1Service) createUserCreateActivity(c echo.Context, user *User) error {
-	ctx := c.Request().Context()
-	payload := ActivityUserCreatePayload{
-		UserID:   user.ID,
-		Username: user.Username,
-		Role:     user.Role,
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return errors.Wrap(err, "failed to marshal activity payload")
-	}
-	activity, err := s.Store.CreateActivity(ctx, &store.Activity{
-		CreatorID: user.ID,
-		Type:      ActivityUserCreate.String(),
-		Level:     ActivityInfo.String(),
-		Payload:   string(payloadBytes),
-	})
-	if err != nil || activity == nil {
-		return errors.Wrap(err, "failed to create activity")
-	}
-	return err
 }
 
 func convertUserFromStore(user *store.User) *User {

@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { initReactI18next } from "react-i18next";
 
 export const availableLocales = [
+  "ar",
   "de",
   "en",
   "es",
@@ -41,7 +42,7 @@ i18n
     },
     fallbackLng: {
       ...fallbacks,
-      ...{ default: ["en"] },
+      ...{ default: ["zh-Hans"] },
     } as FallbackLng,
   });
 

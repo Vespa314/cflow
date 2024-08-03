@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package memos.api.v2;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gen/api/v2";
+
+service InboxService {
+  rpc ListInboxes(ListInboxesRequest) returns (ListInboxesResponse) {
+    option (google.api.http) = {get: "/api/v2/inboxes"};
+  }
+
+  rpc UpdateInbox(UpdateInboxRequest) returns (UpdateInboxResponse) {
+    option (google.api.http) = {
+      patch: "/v2/inboxes"
+      body: "inbox"
+    };
+    option (google.api.method_signature) = "inbox,update_mask";
+  }
+
+  rpc DeleteInbox(DeleteInboxRequest) returns (DeleteInboxResponse) {
+    option (google.api.http) = {delete: "/v2/{name=inboxes/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}
+
+message Inbox {
+  // The name of the inbox.
+  // Format: inboxes/{id}
+  string name = 1;
+  // Format: users/{username}
+  string sender = 2;
+  // Format: users/{username}
+  string receiver = 3;
+
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    UNREAD = 1;
+    ARCHIVED = 2;
+  }
+  Status status = 4;
+
+  google.protobuf.Timestamp create_time = 5;
+
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_MEMO_COMMENT = 1;
+    TYPE_VERSION_UPDATE = 2;
+  }
+  Type type = 6;
+
+  optional int32 activity_id = 7;
+}
+
+message ListInboxesRequest {
+  // Format: users/{username}
+  string user = 1;
+}
+
+message ListInboxesResponse {
+  repeated Inbox inboxes = 1;
+}
+
+message UpdateInboxRequest {
+  Inbox inbox = 1;
+
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateInboxResponse {
+  Inbox inbox = 1;
+}
+
+message DeleteInboxRequest {
+  // The name of the inbox to delete.
+  // Format: inboxes/{inbox}
+  string name = 1;
+}
+
+message DeleteInboxResponse {}

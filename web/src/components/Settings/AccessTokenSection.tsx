@@ -4,15 +4,15 @@ import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { userServiceClient } from "@/grpcweb";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { UserNamePrefix, extractUsernameFromName } from "@/store/v1";
 import { UserAccessToken } from "@/types/proto/api/v2/user_service";
 import { useTranslate } from "@/utils/i18n";
 import showCreateAccessTokenDialog from "../CreateAccessTokenDialog";
 import { showCommonDialog } from "../Dialog/CommonDialog";
 import Icon from "../Icon";
-import LearnMore from "../LearnMore";
 
 const listAccessTokens = async (username: string) => {
-  const { accessTokens } = await userServiceClient.listUserAccessTokens({ username: username });
+  const { accessTokens } = await userServiceClient.listUserAccessTokens({ name: `${UserNamePrefix}${username}` });
   return accessTokens;
 };
 
@@ -22,13 +22,13 @@ const AccessTokenSection = () => {
   const [userAccessTokens, setUserAccessTokens] = useState<UserAccessToken[]>([]);
 
   useEffect(() => {
-    listAccessTokens(currentUser.username).then((accessTokens) => {
+    listAccessTokens(extractUsernameFromName(currentUser.name)).then((accessTokens) => {
       setUserAccessTokens(accessTokens);
     });
   }, []);
 
   const handleCreateAccessTokenDialogConfirm = async () => {
-    const accessTokens = await listAccessTokens(currentUser.username);
+    const accessTokens = await listAccessTokens(extractUsernameFromName(currentUser.name));
     setUserAccessTokens(accessTokens);
   };
 
@@ -44,15 +44,16 @@ const AccessTokenSection = () => {
       style: "danger",
       dialogName: "delete-access-token-dialog",
       onConfirm: async () => {
-        await userServiceClient.deleteUserAccessToken({ username: currentUser.username, accessToken: accessToken });
+        await userServiceClient.deleteUserAccessToken({ name: currentUser.name, accessToken: accessToken });
         setUserAccessTokens(userAccessTokens.filter((token) => token.accessToken !== accessToken));
       },
     });
   };
 
   const getFormatedAccessToken = (accessToken: string) => {
-    return `${accessToken.slice(0, 4)}****${accessToken.slice(-4)}`;
+    return `****${accessToken.slice(-4)}`;
   };
+
 
   return (
     <>
@@ -62,9 +63,7 @@ const AccessTokenSection = () => {
             <div className="sm:flex-auto space-y-1">
               <p className="flex flex-row justify-start items-center font-medium text-gray-700 dark:text-gray-300">
                 Access Tokens
-                <LearnMore className="ml-2" url="https://usememos.com/docs/access-tokens" />
               </p>
-              <p className="text-sm text-gray-700 dark:text-gray-400">A list of all access tokens for your account.</p>
             </div>
             <div className="mt-4 sm:mt-0">
               <Button
@@ -84,17 +83,17 @@ const AccessTokenSection = () => {
                 <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-400">
                   <thead>
                     <tr>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-400">
+                      <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-400">
                         Token
                       </th>
-                      <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-400">
+                      <th scope="col" className="py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-400">
                         Description
                       </th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-400">
-                        Created At
+                      <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-400">
+                        Created
                       </th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-400">
-                        Expires At
+                      <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-400">
+                        Expires
                       </th>
                       <th scope="col" className="relative py-3.5 pl-3 pr-4">
                         <span className="sr-only">{t("common.delete")}</span>
@@ -104,7 +103,7 @@ const AccessTokenSection = () => {
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-500">
                     {userAccessTokens.map((userAccessToken) => (
                       <tr key={userAccessToken.accessToken}>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 dark:text-gray-400 flex flex-row justify-start items-center gap-x-1">
+                        <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-900 dark:text-gray-400 flex flex-row justify-start items-center gap-x-1">
                           <span className="font-mono">{getFormatedAccessToken(userAccessToken.accessToken)}</span>
                           <IconButton
                             color="neutral"
@@ -115,16 +114,16 @@ const AccessTokenSection = () => {
                             <Icon.Clipboard className="w-4 h-auto text-gray-400" />
                           </IconButton>
                         </td>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 dark:text-gray-400">
+                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-xs text-gray-900 dark:text-gray-400">
                           {userAccessToken.description}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500 dark:text-gray-400">
                           {userAccessToken.issuedAt?.toLocaleString()}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500 dark:text-gray-400">
                           {userAccessToken.expiresAt?.toLocaleString() ?? "Never"}
                         </td>
-                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm">
+                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-xs">
                           <IconButton
                             color="danger"
                             variant="plain"

@@ -8,7 +8,6 @@ import { useTranslate } from "@/utils/i18n";
 import { showCommonDialog } from "../Dialog/CommonDialog";
 import showDisablePasswordLoginDialog from "../DisablePasswordLoginDialog";
 import Icon from "../Icon";
-import LearnMore from "../LearnMore";
 import showUpdateCustomizedProfileDialog from "../UpdateCustomizedProfileDialog";
 import "@/less/settings/system-section.less";
 
@@ -39,19 +38,9 @@ const SystemSection = () => {
     autoBackupInterval: systemStatus.autoBackupInterval,
     memoDisplayWithUpdatedTs: systemStatus.memoDisplayWithUpdatedTs,
   });
-  const [telegramBotToken, setTelegramBotToken] = useState<string>("");
 
   useEffect(() => {
     globalStore.fetchSystemStatus();
-  }, []);
-
-  useEffect(() => {
-    api.getSystemSetting().then(({ data: systemSettings }) => {
-      const telegramBotSetting = systemSettings.find((setting) => setting.name === "telegram-bot-token");
-      if (telegramBotSetting) {
-        setTelegramBotToken(telegramBotSetting.value);
-      }
-    });
   }, []);
 
   useEffect(() => {
@@ -88,7 +77,7 @@ const SystemSection = () => {
       showCommonDialog({
         title: t("setting.system-section.enable-password-login"),
         content: t("setting.system-section.enable-password-login-warning"),
-        style: "warning",
+        style: "danger",
         dialogName: "enable-password-login-dialog",
         onConfirm: async () => {
           setState({ ...state, disablePasswordLogin: value });
@@ -115,24 +104,6 @@ const SystemSection = () => {
       return;
     }
     toast.success(t("message.succeed-vacuum-database"));
-  };
-
-  const handleTelegramBotTokenChanged = (value: string) => {
-    setTelegramBotToken(value);
-  };
-
-  const handleSaveTelegramBotToken = async () => {
-    try {
-      await api.upsertSystemSetting({
-        name: "telegram-bot-token",
-        value: telegramBotToken,
-      });
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.response.data.message);
-      return;
-    }
-    toast.success("Telegram Bot Token updated");
   };
 
   const handleAdditionalStyleChanged = (value: string) => {
@@ -200,7 +171,6 @@ const SystemSection = () => {
   };
 
   const handleMaxUploadSizeChanged = async (event: React.FocusEvent<HTMLInputElement>) => {
-    // fixes cursor skipping position on mobile
     event.target.selectionEnd = event.target.value.length;
 
     let num = parseInt(event.target.value);
@@ -224,7 +194,6 @@ const SystemSection = () => {
   };
 
   const handleAutoBackupIntervalChanged = async (event: React.FocusEvent<HTMLInputElement>) => {
-    // fixes cursor skipping position on mobile
     event.target.selectionEnd = event.target.value.length;
 
     let num = parseInt(event.target.value);
@@ -314,32 +283,11 @@ const SystemSection = () => {
         />
       </div>
       <Divider className="!mt-3 !my-4" />
-      {/* <div className="form-label">
-        <div className="flex flex-row items-center">
-          <div className="w-auto flex items-center">
-            <span className="text-sm mr-1">{t("setting.system-section.telegram-bot-token")}</span>
-            <LearnMore
-              url="https://usememos.com/docs/integration/telegram-bot"
-              title={t("setting.system-section.telegram-bot-token-description")}
-            />
-          </div>
-        </div>
-        <Button onClick={handleSaveTelegramBotToken}>{t("common.save")}</Button>
-      </div>
-      <Input
-        className="w-full"
-        sx={{
-          fontFamily: "monospace",
-          fontSize: "14px",
-        }}
-        placeholder={t("setting.system-section.telegram-bot-token-placeholder")}
-        value={telegramBotToken}
-        onChange={(event) => handleTelegramBotTokenChanged(event.target.value)}
-      />
-      <Divider className="!mt-3 !my-4" /> */}
       <div className="form-label">
         <span className="normal-text">{t("setting.system-section.additional-style")}</span>
-        <Button onClick={handleSaveAdditionalStyle}>{t("common.save")}</Button>
+        <Button variant="outlined" color="neutral" onClick={handleSaveAdditionalStyle}>
+          {t("common.save")}
+        </Button>
       </div>
       <Textarea
         className="w-full"
@@ -355,7 +303,9 @@ const SystemSection = () => {
       />
       <div className="form-label mt-2">
         <span className="normal-text">{t("setting.system-section.additional-script")}</span>
-        <Button onClick={handleSaveAdditionalScript}>{t("common.save")}</Button>
+        <Button variant="outlined" color="neutral" onClick={handleSaveAdditionalScript}>
+          {t("common.save")}
+        </Button>
       </div>
       <Textarea
         className="w-full"

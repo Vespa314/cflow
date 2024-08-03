@@ -1,17 +1,33 @@
 {
-  "short_name": "Memos",
-  "name": "Memos",
-  "description": "usememos/memos",
-  "icons": [
-    {
-      "src": "/logo.webp",
-      "type": "image/webp",
-      "sizes": "520x520"
-    }
-  ],
+  "short_name": "cflow",
+  "name": "cflow",
+  "description": "cflow",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "theme_color": "#f4f4f5",
-  "background_color": "#f4f4f5"
+  "background_color": "#f4f4f5",
+  "icons": [
+    {
+        "src": "/cflow.jpg",
+        "type": "image/png",
+        "sizes": "16x16"
+    },
+    {
+        "src": "/cflow.jpg",
+        "type": "image/png",
+        "sizes": "32x32"
+    },
+    {
+        "src": "/cflow.jpg",
+        "sizes": "192x192",
+        "type": "image/png"
+    },
+    {
+        "src": "/cflow.jpg",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+    }
+  ]
 }

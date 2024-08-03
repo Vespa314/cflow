@@ -6,46 +6,75 @@ import "api/v2/common.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "gen/api/v2";
 
 service UserService {
+  // GetUser gets a user by name.
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
-    option (google.api.http) = {get: "/api/v2/users/{username}"};
-    option (google.api.method_signature) = "username";
+    option (google.api.http) = {get: "/api/v2/{name=users/*}"};
+    option (google.api.method_signature) = "name";
   }
+  // CreateUser creates a new user.
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users"
+      body: "user"
+    };
+    option (google.api.method_signature) = "user";
+  }
+  // UpdateUser updates a user.
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
     option (google.api.http) = {
-      post: "/api/v2/users/{username}"
-      body: "*"
+      patch: "/api/v2/{user.name=users/*}"
+      body: "user"
     };
-    option (google.api.method_signature) = "username";
+    option (google.api.method_signature) = "user,update_mask";
+  }
+  // DeleteUser deletes a user.
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
+    option (google.api.http) = {delete: "/api/v2/{name=users/*}"};
+    option (google.api.method_signature) = "name";
+  }
+  rpc GetUserSetting(GetUserSettingRequest) returns (GetUserSettingResponse) {
+    option (google.api.http) = {get: "/api/v2/{name=users/*}/setting"};
+    option (google.api.method_signature) = "name";
+  }
+  rpc UpdateUserSetting(UpdateUserSettingRequest) returns (UpdateUserSettingResponse) {
+    option (google.api.http) = {
+      patch: "/api/v2/{setting.name=users/*/setting}"
+      body: "setting"
+    };
+    option (google.api.method_signature) = "setting,update_mask";
   }
   // ListUserAccessTokens returns a list of access tokens for a user.
   rpc ListUserAccessTokens(ListUserAccessTokensRequest) returns (ListUserAccessTokensResponse) {
-    option (google.api.http) = {get: "/api/v2/users/{username}/access_tokens"};
-    option (google.api.method_signature) = "username";
+    option (google.api.http) = {get: "/api/v2/{name=users/*}/access_tokens"};
+    option (google.api.method_signature) = "name";
   }
   // CreateUserAccessToken creates a new access token for a user.
   rpc CreateUserAccessToken(CreateUserAccessTokenRequest) returns (CreateUserAccessTokenResponse) {
     option (google.api.http) = {
-      post: "/api/v2/users/{username}/access_tokens"
+      post: "/api/v2/{name=users/*}/access_tokens"
       body: "*"
     };
-    option (google.api.method_signature) = "username";
+    option (google.api.method_signature) = "name";
   }
   // DeleteUserAccessToken deletes an access token for a user.
   rpc DeleteUserAccessToken(DeleteUserAccessTokenRequest) returns (DeleteUserAccessTokenResponse) {
-    option (google.api.http) = {delete: "/api/v2/users/{username}/access_tokens/{access_token}"};
-    option (google.api.method_signature) = "username,access_token";
+    option (google.api.http) = {delete: "/api/v2/{name=users/*}/access_tokens/{access_token}"};
+    option (google.api.method_signature) = "name,access_token";
   }
 }
 
 message User {
-  int32 id = 1;
+  // The name of the user.
+  // Format: users/{username}
+  string name = 1;
 
-  string username = 2;
+  int32 id = 2;
 
   enum Role {
     ROLE_UNSPECIFIED = 0;
@@ -71,28 +100,110 @@ message User {
 }
 
 message GetUserRequest {
-  string username = 1;
+  // The name of the user.
+  // Format: users/{username}
+  string name = 1;
 }
 
 message GetUserResponse {
   User user = 1;
 }
 
+message CreateUserRequest {
+  User user = 1;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
 message UpdateUserRequest {
-  string username = 1;
+  User user = 1 [(google.api.field_behavior) = REQUIRED];
 
-  User user = 2;
-
-  // The update mask applies to the user resource.
-  repeated string update_mask = 3;
+  google.protobuf.FieldMask update_mask = 2;
 }
 
 message UpdateUserResponse {
   User user = 1;
 }
 
+message DeleteUserRequest {
+  // The name of the user.
+  // Format: users/{username}
+  string name = 1;
+}
+
+message DeleteUserResponse {}
+
+message UserSetting {
+  // The name of the user.
+  // Format: users/{username}
+  string name = 1;
+  // The preferred locale of the user.
+  string locale = 2;
+  // The preferred appearance of the user.
+  string appearance = 3;
+  // The default visibility of the memo.
+  string memo_visibility = 4;
+  // mark with tag
+  bool mark_with_tag = 5;
+  // show word cnt
+  bool show_word_cnt = 6;
+  // custom shortcut
+  string custom_shortcut = 7;
+  // favrivate tag
+  string fav_tag = 8;
+  // ref preview
+  bool ref_preview = 9;
+  // show todo page
+  bool show_todo_page = 10;
+  // show archive page
+  bool show_archive_page = 11;
+  // paste rename
+  bool paste_rename = 12;
+  // show tag selector
+  bool show_tag_selector = 13;
+  // show memo public button
+  bool show_memo_public = 14;
+  // custom card style
+  string custom_card_style = 15;
+  // double click edit
+  bool double_click_edit = 16;
+  // use excalidraw
+  bool use_excalidraw = 17;
+}
+
+message GetUserSettingRequest {
+  // The name of the user.
+  // Format: users/{username}
+  string name = 1;
+}
+
+message GetUserSettingResponse {
+  UserSetting setting = 1;
+}
+
+message UpdateUserSettingRequest {
+  UserSetting setting = 1 [(google.api.field_behavior) = REQUIRED];
+
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateUserSettingResponse {
+  UserSetting setting = 1;
+}
+
+message UserAccessToken {
+  string access_token = 1;
+  string description = 2;
+  google.protobuf.Timestamp issued_at = 3;
+  google.protobuf.Timestamp expires_at = 4;
+}
+
 message ListUserAccessTokensRequest {
-  string username = 1;
+  // The name of the user.
+  // Format: users/{username}
+  string name = 1;
 }
 
 message ListUserAccessTokensResponse {
@@ -100,7 +211,9 @@ message ListUserAccessTokensResponse {
 }
 
 message CreateUserAccessTokenRequest {
-  string username = 1;
+  // The name of the user.
+  // Format: users/{username}
+  string name = 1;
 
   string description = 2;
 
@@ -112,16 +225,11 @@ message CreateUserAccessTokenResponse {
 }
 
 message DeleteUserAccessTokenRequest {
-  string username = 1;
+  // The name of the user.
+  // Format: users/{username}
+  string name = 1;
   // access_token is the access token to delete.
   string access_token = 2;
 }
 
 message DeleteUserAccessTokenResponse {}
-
-message UserAccessToken {
-  string access_token = 1;
-  string description = 2;
-  google.protobuf.Timestamp issued_at = 3;
-  google.protobuf.Timestamp expires_at = 4;
-}

@@ -3,10 +3,14 @@ import "katex/dist/katex.min.css";
 import { matcher } from "../matcher";
 
 const BLOCK_LATEX_REG = new RegExp(
-  "\\$\\$(\\s*[^\\$\\s][^\\$]*?)\\$\\$|\\\\\\[(.+?)\\\\\\]|\\\\begin{equation}([\\s\\S]+?)\\\\end{equation}"
+  "\\$\\$(\\s*[^\\$\\s][^\\$]*?)\\$\\$(?!.)|\\\\\\[(.+?)\\\\\\](?!.)|\\\\begin{equation}([\\s\\S]+?)\\\\end{equation}(?!.)"
+
 );
 
 const blockRenderer = (rawStr: string) => {
+  const BLOCK_LATEX_REG = new RegExp(
+    "\\$\\$(\\s*[^\\$\\s][^\\$]*?)\\$\\$|\\\\\\[(.+?)\\\\\\]|\\\\begin{equation}([\\s\\S]+?)\\\\end{equation}"
+  );
   const matchResult = matcher(rawStr, BLOCK_LATEX_REG);
   if (!matchResult) {
     return <>{rawStr}</>;
@@ -25,7 +29,11 @@ const blockRenderer = (rawStr: string) => {
     latexCode = matchResult[3];
   }
 
-  return <TeX block={true}>{latexCode}</TeX>;
+  return (
+    <div className="w-full max-w-full overflow-x-auto">
+      <TeX block={true}>{latexCode}</TeX>
+    </div>
+  );
 };
 
 export default {

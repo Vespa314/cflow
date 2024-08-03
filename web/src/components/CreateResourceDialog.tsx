@@ -275,7 +275,7 @@ const CreateResourceDialog: React.FC<Props> = (props: Props) => {
               placeholder={t("resource.create-dialog.external-link.type-placeholder")}
               freeSolo={true}
               options={fileTypeAutocompleteOptions}
-              onChange={(_, value) => handleFileTypeChanged(value || "")}
+              onChange={(_, value) => handleFileTypeChanged(value?.toString() || "")}
             />
           </>
         )}

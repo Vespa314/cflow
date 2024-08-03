@@ -1,18 +1,19 @@
+import { Divider, IconButton, Input } from "@mui/joy";
+import { includes } from "lodash-es";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { showCommonDialog } from "@/components/Dialog/CommonDialog";
 import Empty from "@/components/Empty";
 import Icon from "@/components/Icon";
 import MobileHeader from "@/components/MobileHeader";
 import ResourceIcon from "@/components/ResourceIcon";
 import { resourceServiceClient } from "@/grpcweb";
 import useLoading from "@/hooks/useLoading";
+import i18n from "@/i18n";
 import { Resource } from "@/types/proto/api/v2/resource_service";
 import { useTranslate } from "@/utils/i18n";
-
-const fetchAllResources = async () => {
-  const { resources } = await resourceServiceClient.listResources({});
-  return resources;
-};
+import { useResourceStore } from "../store/module";
+import showRenameImageDialog from "../components/ImageRenameDialag"
+import {getResourceUrl} from "../utils/resource"
 
 function groupResourcesByDate(resources: Resource[]) {
   const grouped = new Map<number, Resource[]>();
@@ -29,27 +30,77 @@ function groupResourcesByDate(resources: Resource[]) {
   return grouped;
 }
 
+interface State {
+  searchQuery: string;
+}
+
 const Resources = () => {
   const t = useTranslate();
   const loadingState = useLoading();
+  const [state, setState] = useState<State>({
+    searchQuery: "",
+  });
   const [resources, setResources] = useState<Resource[]>([]);
-  const groupedResources = groupResourcesByDate(resources);
+  const filteredResources = resources.filter((resource) => includes(resource.filename, state.searchQuery));
+  const groupedResources = groupResourcesByDate(filteredResources.filter((resoure) => resoure.memoId));
+  const unusedResources = filteredResources.filter((resoure) => !resoure.memoId);
+  const resourceStore = useResourceStore();
 
   useEffect(() => {
-    fetchAllResources().then((resources) => {
+    resourceServiceClient.listResources({}).then(({ resources }) => {
       setResources(resources);
       loadingState.setFinish();
     });
   }, []);
 
+  const handleUpdateResourceName = async (resource: Resource) => {
+      showRenameImageDialog(resource.filename, getResourceUrl(resource), async (new_name) => {
+        await resourceStore.updateResourceName(resource.id, new_name);
+        setResources(resources.map((res) => {
+          if (res.id === resource.id) {
+            return {
+              ...res,
+              filename: new_name
+            }
+          }
+          return res;
+        }));
+      })
+  };
+
+  const handleDeleteUnusedResources = () => {
+    showCommonDialog({
+      title: "Delete all unused resources",
+      content: "Are you sure to delete all unused resources? This action cannot be undone.",
+      style: "warning",
+      dialogName: "delete-unused-resources-dialog",
+      onConfirm: async () => {
+        for (const resource of unusedResources) {
+          await resourceServiceClient.deleteResource({ id: resource.id });
+        }
+        setResources(resources.filter((resoure) => resoure.memoId));
+      },
+    });
+  };
+
   return (
-    <section className="w-full max-w-3xl min-h-full flex flex-col justify-start items-center px-4 sm:px-2 sm:pt-4 pb-8 bg-zinc-100 dark:bg-zinc-800">
-      <MobileHeader showSearch={false} />
-      <div className="w-full flex flex-col justify-start items-start px-4 py-3 rounded-xl bg-white dark:bg-zinc-700 text-black dark:text-gray-300">
+    <section className="@container w-full max-w-3xl min-h-full flex flex-col justify-start items-center px-4 sm:px-2 sm:pt-4 pb-8 bg-zinc-100 dark:bg-zinc-800">
+      <MobileHeader />
+      <div className="w-full shadow flex flex-col justify-start items-start px-4 py-3 rounded-xl bg-white dark:bg-zinc-700 text-black dark:text-gray-300">
         <div className="relative w-full flex flex-row justify-between items-center">
-          <p className="px-2 py-1 flex flex-row justify-start items-center cursor-pointer select-none rounded opacity-80 hover:bg-gray-100 dark:hover:bg-zinc-700">
+          <p className="px-2 py-1 flex flex-row justify-start items-center select-none opacity-80">
             <Icon.Paperclip className="w-5 h-auto mr-1" /> {t("common.resources")}
           </p>
+          <div>
+            <Input
+              className="max-w-[8rem]"
+              variant="plain"
+              placeholder={t("common.search")}
+              startDecorator={<Icon.Search className="w-4 h-auto" />}
+              value={state.searchQuery}
+              onChange={(e) => setState({ ...state, searchQuery: e.target.value })}
+            />
+          </div>
         </div>
         <div className="w-full flex flex-col justify-start items-start mt-4 mb-6">
           {loadingState.isLoading ? (
@@ -58,37 +109,33 @@ const Resources = () => {
             </div>
           ) : (
             <>
-              {resources.length === 0 ? (
+              {filteredResources.length === 0 ? (
                 <div className="w-full mt-8 mb-8 flex flex-col justify-center items-center italic">
                   <Empty />
-                  <p className="mt-4 text-gray-600 dark:text-gray-400">{t("message.no-data")}</p>
+                  <p className="mt-4 text-gray-600">{t("message.no-data")}</p>
                 </div>
               ) : (
                 <div className={"w-full h-auto px-2 flex flex-col justify-start items-start gap-y-8"}>
-                  {Array.from(groupedResources.entries()).map(([timestamp, resources]) => {
+                  {Array.from(groupedResources.entries()).sort((a, b) => b[0] - a[0]).map(([timestamp, resources]) => {
                     const date = new Date(timestamp);
                     return (
                       <div key={timestamp} className="w-full flex flex-row justify-start items-start">
                         <div className="w-16 sm:w-24 pt-4 sm:pl-4 flex flex-col justify-start items-start">
                           <span className="text-sm opacity-60">{date.getFullYear()}</span>
-                          <span className="font-medium text-xl">{date.toLocaleString("default", { month: "short" })}</span>
+                          <span className="font-medium text-xl">{date.toLocaleString(i18n.language, { month: "short" })}</span>
                         </div>
                         <div className="w-full max-w-[calc(100%-4rem)] sm:max-w-[calc(100%-6rem)] flex flex-row justify-start items-start gap-4 flex-wrap">
                           {resources.map((resource) => {
                             return (
                               <div key={resource.id} className="w-24 sm:w-32 h-auto flex flex-col justify-start items-start">
-                                <div className="w-24 h-24 flex justify-center items-center sm:w-32 sm:h-32 border dark:border-zinc-900 overflow-clip rounded cursor-pointer hover:shadow hover:opacity-80">
+                                <div className="w-24 h-24 flex justify-center items-center sm:w-32 sm:h-32 border overflow-clip rounded-xl cursor-pointer">
                                   <ResourceIcon resource={resource} strokeWidth={0.5} />
                                 </div>
                                 <div className="w-full max-w-full flex flex-row justify-between items-center mt-1 px-1">
-                                  <p className="text-xs shrink text-gray-400 truncate">{resource.filename}</p>
-                                  <Link
-                                    className="shrink-0 text-xs ml-1 text-gray-400 hover:underline hover:text-blue-600"
-                                    to={`/m/${resource.relatedMemoId}`}
-                                    target="_blank"
-                                  >
-                                    #{resource.relatedMemoId}
-                                  </Link>
+                                  <p className="text-xs shrink text-gray-400 truncate" onDoubleClick={() => handleUpdateResourceName(resource)}>{resource.filename}</p>
+                                  <span className="shrink-0 text-xs ml-1 text-gray-400" >
+                                    #{resource.memoId}
+                                  </span>
                                 </div>
                               </div>
                             );
@@ -97,6 +144,36 @@ const Resources = () => {
                       </div>
                     );
                   })}
+
+                  {unusedResources.length > 0 && (
+                    <>
+                      <Divider />
+                      <div className="w-full flex flex-row justify-start items-start">
+                        <div className="w-16 sm:w-24 sm:pl-4 flex flex-col justify-start items-start"></div>
+                        <div className="w-full max-w-[calc(100%-4rem)] sm:max-w-[calc(100%-6rem)] flex flex-row justify-start items-start gap-4 flex-wrap">
+                          <div className="w-full flex flex-row justify-start items-center gap-2">
+                            <span className="text-gray-600">Unused resources</span>
+                            <span className="text-gray-500">({unusedResources.length})</span>
+                            <IconButton size="sm" onClick={handleDeleteUnusedResources}>
+                              <Icon.Trash className="w-4 h-auto opacity-60" />
+                            </IconButton>
+                          </div>
+                          {unusedResources.map((resource) => {
+                            return (
+                              <div key={resource.id} className="w-24 sm:w-32 h-auto flex flex-col justify-start items-start">
+                                <div className="w-24 h-24 flex justify-center items-center sm:w-32 sm:h-32 border overflow-clip rounded-xl cursor-pointer">
+                                  <ResourceIcon resource={resource} strokeWidth={0.5} />
+                                </div>
+                                <div className="w-full max-w-full flex flex-row justify-between items-center mt-1 px-1">
+                                  <p className="text-xs shrink text-gray-400 truncate">{resource.filename}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </>

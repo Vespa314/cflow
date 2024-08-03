@@ -1,61 +1,106 @@
+import { Select, Option, Button, Tooltip, IconButton, Divider, Box } from "@mui/joy";
 import { isNumber, last, uniq } from "lodash-es";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import useLocalStorage from "react-use/lib/useLocalStorage";
-import { upsertMemoResource } from "@/helpers/api";
-import { TAB_SPACE_WIDTH, UNKNOWN_ID } from "@/helpers/consts";
-import { clearContentQueryParam } from "@/helpers/utils";
+import { memoServiceClient } from "@/grpcweb";
+import { TAB_SPACE_WIDTH, UNKNOWN_ID, VISIBILITY_SELECTOR_ITEMS } from "@/helpers/consts";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import { getMatchedNodes } from "@/labs/marked";
-import { useFilterStore, useGlobalStore, useMemoStore, useResourceStore, useTagStore, useUserStore } from "@/store/module";
+import { useGlobalStore, useMemoStore, useResourceStore, useTagStore } from "@/store/module";
+import { useUserV1Store } from "@/store/v1";
 import { Resource } from "@/types/proto/api/v2/resource_service";
+import { UserSetting, User_Role } from "@/types/proto/api/v2/user_service";
 import { useTranslate } from "@/utils/i18n";
 import showCreateResourceDialog from "../CreateResourceDialog";
 import Icon from "../Icon";
-import MemoVisibilitySelector from "./ActionButton/MemoVisibilitySelector";
+import VisibilityIcon from "../VisibilityIcon";
 import TagSelector from "./ActionButton/TagSelector";
+import InputActionSelector from "./ActionButton/InputActionSelector"
 import Editor, { EditorRefActions } from "./Editor";
 import RelationListView from "./RelationListView";
 import ResourceListView from "./ResourceListView";
-import "@/less/memo-editor.less";
+import showRenameImageDialog from "../ImageRenameDialag"
+import showCreateExcalidrawDialog from "../CreateExcalidrawDialog"
+import dayjs from 'dayjs'
+import 'dayjs/locale/zh-cn'
 
-const listItemSymbolList = ["- [ ] ", "- [x] ", "- [X] ", "* ", "- "];
+
+const listItemSymbolList = ["- [ ] ", "- [x] ", "* ", "- "];
 const emptyOlReg = /^(\d+)\. $/;
 const listItemReg = /^( *)([-|\*]) (.*)/;
+const orderItemReg = /^( *)(\d+)\. (.*)/;
+
+const CustomIcon = ({ name }: { name: string }) => {
+  const LucideIcon = (Icon.icons as { [key: string]: any })[name];
+  return <LucideIcon className="w-5 h-5 mx-auto" />;
+};
+
+const cal_valid_word_cnt = (content: string) => {
+  let _tmp = content
+  _tmp = _tmp.replace(/\[(.+?)\]\(.*?\)/g, '$1');
+  _tmp = _tmp.replace(/ *- \[[ xX]\] (.+)/g, '$1');
+  _tmp = _tmp.replace(/ *[-+] (.+)/g, '$1');
+  _tmp = _tmp.replace(/ *\d+\. (.+)/g, '$1');
+  _tmp = _tmp.replace(/#+ (.+)/g, '$1');
+  _tmp = _tmp.replace(/> (.+)/g, '$1');
+  _tmp = _tmp.replace(/\|[:\-\|]+\| *(?!.)/g, '');
+  _tmp = _tmp.replace(/\*\*\*(.+)\*\*\*/g, '$1');
+  _tmp = _tmp.replace(/\*\*(.+)\*\*/g, '$1');
+  _tmp = _tmp.replace(/\*(.+)\*/g, '$1');
+  _tmp = _tmp.replace(/==(.+)==/g, '$1');
+  _tmp = _tmp.replace(/^\s+|\s+$/g, '');
+  _tmp = _tmp.replace(/\n|\s+/g, '');
+  return _tmp.length
+};
 
 interface Props {
   className?: string;
+  editorClassName?: string;
+  cacheKey?: string;
   memoId?: MemoId;
   relationList?: MemoRelation[];
+  init_content?: string;
   onConfirm?: () => void;
 }
 
 interface State {
   memoVisibility: Visibility;
+  fullscreen: boolean;
   resourceList: Resource[];
   relationList: MemoRelation[];
   isUploadingResource: boolean;
   isRequesting: boolean;
 }
 
+type Dict = {
+  name: string;
+  content: string;
+  shortcut: string;
+  pc_show: boolean;
+  mobile_show: boolean;
+  tips: string;
+  icon: string;
+  disable: boolean;
+  meta_key: string
+};
 
 function calculateCursorLinePosition(lines: string[], n: number): number {
   let totalCursor = 0;
 
   for (let i = 0; i < lines.length; i++) {
-      totalCursor += lines[i].length + 1; // 1 represents the length of the newline character '\n'
+      totalCursor += lines[i].length + 1;
 
       if (totalCursor > n) {
           return i;
       }
   }
 
-  return lines.length; // If the cursor is beyond the last line, return the total number of lines + 1
+  return lines.length;
 }
 
 function findFirstPipeLine(lines: string[], currentLine: number): number {
-
-  // 循环从当前行开始往回找
   let last_line = -1
   for (let i = currentLine; i >= 0; i--) {
     const line = lines[i].trim();
@@ -69,51 +114,77 @@ function findFirstPipeLine(lines: string[], currentLine: number): number {
     }
   }
 
-  return -1; // 如果没有找到以“|”结尾的行，则返回 -1
+  return -1;
 }
 
 
 const MemoEditor = (props: Props) => {
-  const { className, memoId, onConfirm } = props;
+  const { className, editorClassName, cacheKey, memoId, onConfirm } = props;
   const { i18n } = useTranslation();
   const t = useTranslate();
-  const [contentCache, setContentCache] = useLocalStorage<string>(`memo-editor-${props.memoId || "0"}`, "");
+  const contentCacheKey = `memo-editor-${cacheKey}`;
+  const [contentCache, setContentCache] = useLocalStorage<string>(contentCacheKey, "");
   const {
     state: { systemStatus },
   } = useGlobalStore();
-  const userStore = useUserStore();
-  const filterStore = useFilterStore();
+  const userV1Store = useUserV1Store();
   const memoStore = useMemoStore();
   const tagStore = useTagStore();
   const resourceStore = useResourceStore();
-
+  const currentUser = useCurrentUser();
   const [state, setState] = useState<State>({
     memoVisibility: "PRIVATE",
     resourceList: [],
+    fullscreen: false,
     relationList: props.relationList ?? [],
     isUploadingResource: false,
     isRequesting: false,
   });
+  const init_content = props.init_content ?? ""
   const [hasContent, setHasContent] = useState<boolean>(false);
   const [isInIME, setIsInIME] = useState(false);
+  const [has_modify, set_modify] = useState(false);
   const editorRef = useRef<EditorRefActions>(null);
-  const user = userStore.state.user as User;
-  const setting = user.setting;
+  const userSetting = userV1Store.userSetting as UserSetting;
+  let custom_shortcut: Dict[] = [];
+  if (userSetting?.customShortcut) {
+    custom_shortcut = JSON.parse(userSetting?.customShortcut);
+  }
+  const use_excalidraw = userSetting?.useExcalidraw ?? false;
+  const pc_show_list = custom_shortcut.filter((item) => item['pc_show'] === true);
+  const mobile_show_list = custom_shortcut.filter((item) => item['mobile_show'] === true);
 
+  const paste_file_rename = userSetting?.pasteRename ?? false;
+  const show_tag_selector = userSetting?.showTagSelector ?? true;
+  const show_memo_public = userSetting?.showMemoPublic ?? false;
+
+  const [word_cnt, set_word_cnt] = useState(0);
+  const show_word_cnt = userSetting.showWordCnt;
+  const referenceRelations = memoId
+    ? state.relationList.filter(
+        (relation) => (relation.memoId === memoId || relation.relatedMemoId === memoId) && relation.type === "REFERENCE"
+      )
+    : state.relationList.filter((relation) => relation.type === "REFERENCE");
   useEffect(() => {
-    editorRef.current?.setContent(contentCache || "");
+    if (init_content) {
+      editorRef.current?.setContent(init_content);
+    }
+    else {
+      editorRef.current?.setContent(contentCache || "");
+    }
+    handleEditorFocus();
   }, []);
 
   useEffect(() => {
-    let visibility = setting.memoVisibility;
+    let visibility = userSetting.memoVisibility;
     if (systemStatus.disablePublicMemos && visibility === "PUBLIC") {
       visibility = "PRIVATE";
     }
     setState((prevState) => ({
       ...prevState,
-      memoVisibility: visibility,
+      memoVisibility: visibility as Visibility,
     }));
-  }, [setting.memoVisibility, systemStatus.disablePublicMemos]);
+  }, [userSetting.memoVisibility, systemStatus.disablePublicMemos]);
 
   useEffect(() => {
     if (memoId) {
@@ -129,6 +200,9 @@ const MemoEditor = (props: Props) => {
           if (!contentCache) {
             editorRef.current?.setContent(memo.content ?? "");
           }
+          else if (contentCache != memo.content) {
+            set_modify(true)
+          }
         }
       });
     }
@@ -140,11 +214,10 @@ const MemoEditor = (props: Props) => {
     }
 
     const isMetaKey = event.ctrlKey || event.metaKey;
-    if (isMetaKey) {
-      if (event.key === "Enter") {
-        handleSaveBtnClick();
-        return;
-      }
+    if (isMetaKey && (event.key === "Enter" || event.key === 's')) {
+      event.preventDefault();
+      handleSaveBtnClick();
+      return;
     }
     if (event.key === "Enter" && !isInIME) {
       const cursorPosition = editorRef.current.getCursorPosition();
@@ -155,7 +228,6 @@ const MemoEditor = (props: Props) => {
           event.preventDefault();
           editorRef.current.removeText(cursorPosition - rowValue.length, rowValue.length);
         } else {
-          // unordered/todo list
           let matched = false;
           for (const listItemSymbol of listItemSymbolList) {
             if (rowValue.startsWith(listItemSymbol)) {
@@ -167,13 +239,13 @@ const MemoEditor = (props: Props) => {
           }
 
           if (!matched) {
-            // ordered list
             const olMatchRes = /^(\d+)\. /.exec(rowValue);
             if (olMatchRes) {
               const order = parseInt(olMatchRes[1]);
               if (isNumber(order)) {
                 event.preventDefault();
                 editorRef.current.insertText("", `\n${order + 1}. `);
+                matched = true;
               }
             }
           }
@@ -190,6 +262,23 @@ const MemoEditor = (props: Props) => {
               else if (rowValue) {
                 editorRef.current.removeText(cursorPosition - rowValue.length, rowValue.length);
               }
+              matched = true;
+            }
+          }
+          if (!matched) {
+            const indent_list_match = orderItemReg.exec(rowValue);
+            if (indent_list_match) {
+              event.preventDefault();
+              const spaces = indent_list_match[1];
+              const orderId = parseInt(indent_list_match[2]);
+              const content = indent_list_match[3];
+              if (content.length != 0){
+                editorRef.current.insertText("", `\n${spaces}${orderId+1}. `);
+              }
+              else if (rowValue) {
+                editorRef.current.removeText(cursorPosition - rowValue.length, rowValue.length);
+              }
+              matched = true;
             }
           }
         }
@@ -197,156 +286,163 @@ const MemoEditor = (props: Props) => {
       return;
     }
     if (event.key === "Tab") {
-      const tabSpace = " ".repeat(TAB_SPACE_WIDTH);
-      const cursorPosition = editorRef.current.getCursorPosition();
-      const contentBeforeCursor = editorRef.current.getContent().slice(0, cursorPosition);
-      const rowValue = last(contentBeforeCursor.split("\n"));
-      if(event.shiftKey) {
-        if (rowValue) {
-          const indent_list_match = listItemReg.exec(rowValue);
-          if (indent_list_match) {
-            const spaces = indent_list_match[1];
-            const content = indent_list_match[3];
-            if (spaces.length >= TAB_SPACE_WIDTH) {
-              event.preventDefault();
-              editorRef.current.removeText(cursorPosition - rowValue.length, TAB_SPACE_WIDTH);
-              editorRef.current.setCursorPosition(cursorPosition - TAB_SPACE_WIDTH);
-            }
-            else if (spaces.length == 0 && content.length == 0) {
-              event.preventDefault();
-              editorRef.current.removeText(cursorPosition - rowValue.length, rowValue.length);
-            }
-          }
-        }
+      if (event.shiftKey) {
+        handleAntiIndent();
       }
       else {
-        if (rowValue) {
-          if (listItemReg.test(rowValue)) {
-            event.preventDefault();
-            editorRef.current.setCursorPosition(cursorPosition - rowValue.length);
-            editorRef.current.insertText(tabSpace);
-            editorRef.current.setCursorPosition(cursorPosition + TAB_SPACE_WIDTH);
-          }
-        }
-        else {
-          event.preventDefault();
-          const cursorPosition = editorRef.current.getCursorPosition();
-          const selectedContent = editorRef.current.getSelectedContent();
-          editorRef.current.insertText(tabSpace);
-          if (selectedContent) {
-            editorRef.current.setCursorPosition(cursorPosition + TAB_SPACE_WIDTH);
-          }
-        }
+        handleIndent();
       }
       return;
     }
     if (isMetaKey) {
-      if (event.key === "3") {
-        event.preventDefault();
-        handleAddTagClick();
-      }
-      else if (event.key === "m") {
+      if (event.key === "m") {
         event.preventDefault();
         handleMarkBtnClick();
       }
-      else if (event.key === "l") {
-        event.preventDefault();
-        handleRefBtnClick();
-      }
-      else if (event.key === "h") {
-        const selectedContent = editorRef.current.getSelectedContent();
-        if (selectedContent) {
-          const cursorPosition = editorRef.current.getCursorPosition();
-          event.preventDefault();
-          editorRef.current.insertText("==" + selectedContent);
-          editorRef.current.setCursorPosition(cursorPosition + 2 + selectedContent.length);
-          editorRef.current.insertText("==");
-          editorRef.current.setCursorPosition(cursorPosition + 4 + selectedContent.length);
-        }
-      }
-      else if (event.key === "b") {
-        const selectedContent = editorRef.current.getSelectedContent();
-        if (selectedContent) {
-          const cursorPosition = editorRef.current.getCursorPosition();
-          event.preventDefault();
-          editorRef.current.insertText("**" + selectedContent);
-          editorRef.current.setCursorPosition(cursorPosition + 2 + selectedContent.length);
-          editorRef.current.insertText("**");
-          editorRef.current.setCursorPosition(cursorPosition + 4 + selectedContent.length);
-        }
-      }
-      else if (event.key === "d") {
-        const selectedContent = editorRef.current.getSelectedContent();
-        if (selectedContent) {
-          const cursorPosition = editorRef.current.getCursorPosition();
-          event.preventDefault();
-          editorRef.current.insertText("~~" + selectedContent);
-          editorRef.current.setCursorPosition(cursorPosition + 2 + selectedContent.length);
-          editorRef.current.insertText("~~");
-          editorRef.current.setCursorPosition(cursorPosition + 4 + selectedContent.length);
-        }
-      }
-      else if (event.key === "i") {
-        const selectedContent = editorRef.current.getSelectedContent();
-        if (selectedContent) {
-          const cursorPosition = editorRef.current.getCursorPosition();
-          event.preventDefault();
-          editorRef.current.insertText("*" + selectedContent);
-          editorRef.current.setCursorPosition(cursorPosition + 1 + selectedContent.length);
-          editorRef.current.insertText("*");
-          editorRef.current.setCursorPosition(cursorPosition + 2 + selectedContent.length);
-        }
-      }
-      else if (event.key === "e") {
-        const selectedContent = editorRef.current.getSelectedContent();
-        if (selectedContent) {
-          const cursorPosition = editorRef.current.getCursorPosition();
-          event.preventDefault();
-          editorRef.current.insertText("`" + selectedContent);
-          editorRef.current.setCursorPosition(cursorPosition + 1 + selectedContent.length);
-          editorRef.current.insertText("`");
-          editorRef.current.setCursorPosition(cursorPosition + 2 + selectedContent.length);
+      else {
+        for (const item of custom_shortcut) {
+          if (event.key === (item['shortcut'] || "undefine").toLowerCase()) {
+            if (event.altKey && item.hasOwnProperty("meta_key") && item['meta_key'] === "cmd") {
+              continue
+            }
+            if (event.metaKey && item.hasOwnProperty("meta_key") && item['meta_key'] === "ctrl") {
+              continue
+            }
+            event.preventDefault();
+            handleCustomShortcut(item['content']);
+            break;
+          }
         }
       }
     }
   };
 
-  const handleAddTagClick = () => {
+  const handleBatchIndent = () => {
     if (!editorRef.current) {
       return;
     }
+    const select_content = editorRef.current.getSelectedContent()
+    const begin_idx = editorRef.current.getCursorPosition();
+    const end_idx = begin_idx + select_content.length;
+    const begin_line_number = editorRef.current.getCursorLineNumber();
+    const end_line_number = (editorRef.current.getContent().slice(0, end_idx).split("\n") ?? []).length-1;
+    let new_content = '';
+    const lines = editorRef.current.getContent().split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const end_token = i == lines.length-1 ? '' : '\n';
+      if (i >= begin_line_number && i <= end_line_number) {
+        new_content += "    " + lines[i] + end_token;
+      } else {
+        new_content += lines[i] + end_token;
+      }
+    }
+    editorRef.current.setContent(new_content);
+    editorRef.current.setSelectedContent(begin_idx + 4, end_idx + 4*(end_line_number-begin_line_number+1));
+  }
 
+  const handleIndent = () => {
+    if (!editorRef.current) {
+      return;
+    }
+    if (editorRef.current.getSelectedContent()) {
+      handleBatchIndent();
+      return;
+    }
+    const tabSpace = " ".repeat(TAB_SPACE_WIDTH);
     const cursorPosition = editorRef.current.getCursorPosition();
     const contentBeforeCursor = editorRef.current.getContent().slice(0, cursorPosition);
-    const last_line = last(contentBeforeCursor.split("\n"));
-    if (!last_line) {
-      editorRef.current.insertText("#");
-      editorRef.current.setCursorPosition(cursorPosition + 1);
-      return
+    const rowValue = last(contentBeforeCursor.split("\n"));
+
+    if (rowValue === undefined) {
+      return;
     }
-    const rowValue = last(last_line.split(' '))
-    if (rowValue && rowValue.includes("#")) {
-      const tag_content = last(rowValue.split("#"));
-      if (tag_content && !tag_content.includes(" ")) {
-        let full_tag = ""
-        const tag_cnt_dict = tagStore.state.tagCounts
-        for (let exist_tag of tagStore.state.tags) {
-          if (exist_tag.toLowerCase().includes(tag_content.toLowerCase()) && (full_tag == "" || exist_tag.length < full_tag.length)) {
-              full_tag = exist_tag;
-          }
-        }
-        if (full_tag != "") {
-          editorRef.current.removeText(cursorPosition - tag_content.length - 1, tag_content.length + 1);
-          editorRef.current.insertText("", `#${full_tag}`);
-          editorRef.current.setCursorPosition(cursorPosition + full_tag.length - tag_content.length);
+    const cur_line_content = editorRef.current?.getLine(editorRef.current?.getCursorLineNumber());
+    if (cur_line_content) {
+      const indent_list_match = listItemReg.exec(cur_line_content)
+      if (indent_list_match) {
+        editorRef.current.setCursorPosition(cursorPosition - rowValue.length);
+        editorRef.current.insertText(tabSpace);
+        editorRef.current.setCursorPosition(cursorPosition + TAB_SPACE_WIDTH);
+        return
+      }
+      else {
+        const order_list_match = orderItemReg.exec(cur_line_content)
+        if (order_list_match) {
+          editorRef.current.setCursorPosition(cursorPosition - rowValue.length);
+          editorRef.current.insertText(tabSpace);
+          editorRef.current.setCursorPosition(cursorPosition + TAB_SPACE_WIDTH);
+          return
         }
       }
     }
-    else {
-      editorRef.current.insertText("#");
-      editorRef.current.setCursorPosition(cursorPosition + 1);
+  }
+
+  const handleBatchAntiIndent = () => {
+    if (!editorRef.current) {
+      return;
     }
-  };
+    const select_content = editorRef.current.getSelectedContent()
+    const begin_idx = editorRef.current.getCursorPosition();
+    const end_idx = begin_idx + select_content.length;
+    const begin_line_number = editorRef.current.getCursorLineNumber();
+    const end_line_number = (editorRef.current.getContent().slice(0, end_idx).split("\n") ?? []).length-1;
+    let new_content = '';
+    const lines = editorRef.current.getContent().split('\n');
+    let del_cnt = 0;
+    for (let i = 0; i < lines.length; i++) {
+      if (i >= begin_line_number && i <= end_line_number) {
+        const line = lines[i];
+        const space_before = line.match(/^( *)/);
+        const space_cnt = space_before ? space_before[1].length : 0;
+        const del_space_number = Math.min(4, space_cnt);
+        if (del_space_number) {
+          new_content += line.slice(del_space_number) + '\n';
+          del_cnt += del_space_number
+        } else {
+          new_content += line + '\n';
+        }
+      } else {
+        new_content += lines[i] + (i == lines.length-1 ? '' : '\n');
+      }
+    }
+    editorRef.current.setContent(new_content);
+    editorRef.current.setSelectedContent(begin_idx, end_idx - del_cnt);
+  }
+
+  const handleAntiIndent = () => {
+    if (!editorRef.current) {
+      return;
+    }
+    if (editorRef.current.getSelectedContent()) {
+      handleBatchAntiIndent()
+      return;
+    }
+    const cursorPosition = editorRef.current.getCursorPosition();
+    const contentBeforeCursor = editorRef.current.getContent().slice(0, cursorPosition);
+    const rowValue = last(contentBeforeCursor.split("\n"));
+    if (rowValue === undefined) {
+      return;
+    }
+    const cur_line_content = editorRef.current?.getLine(editorRef.current?.getCursorLineNumber());
+    if (cur_line_content) {
+      const indent_list_match = listItemReg.exec(cur_line_content);
+      const order_list_match = orderItemReg.exec(cur_line_content);
+      if (indent_list_match || order_list_match) {
+        let spaces = ""
+        if(indent_list_match) {
+          spaces = indent_list_match[1]
+        }
+        else if (order_list_match) {
+          spaces = order_list_match[1]
+        }
+
+        if (spaces.length >= TAB_SPACE_WIDTH) {
+          editorRef.current.removeText(cursorPosition - rowValue.length, TAB_SPACE_WIDTH);
+          editorRef.current.setCursorPosition(cursorPosition - TAB_SPACE_WIDTH);
+        }
+      }
+    }
+  }
 
   const handleMemoVisibilityChange = (visibility: Visibility) => {
     setState((prevState) => ({
@@ -365,6 +461,26 @@ const MemoEditor = (props: Props) => {
       },
     });
   };
+
+  const handleExcalidrawClick = async () => {
+    showCreateExcalidrawDialog(
+      (blob: Blob) => {
+        const file = new File([blob as Blob], "excalidraw.png", { type: "image/png" });
+        showRenameImageDialog(file.name, file, async (new_name) => {
+          const arrayBuffer = await file.arrayBuffer();
+          const renamedFile = new File([arrayBuffer], new_name, {
+            type: file.type,
+            lastModified: file.lastModified,
+          });
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(renamedFile)
+          const renamedFileList = dataTransfer.files;
+          uploadMultiFiles(renamedFileList);
+        })
+      },
+      cacheKey
+    );
+  }
 
   const handleSetResourceList = (resourceList: Resource[]) => {
     setState((prevState) => ({
@@ -412,7 +528,13 @@ const MemoEditor = (props: Props) => {
       if (resource) {
         uploadedResourceList.push(resource);
         if (memoId) {
-          await upsertMemoResource(memoId, resource.id);
+          await resourceStore.updateResource({
+            resource: Resource.fromPartial({
+              id: resource.id,
+              memoId,
+            }),
+            updateMask: ["memo_id"],
+          });
         }
       }
     }
@@ -434,49 +556,232 @@ const MemoEditor = (props: Props) => {
   const handlePasteEvent = async (event: React.ClipboardEvent) => {
     if (event.clipboardData && event.clipboardData.files.length > 0) {
       event.preventDefault();
-      await uploadMultiFiles(event.clipboardData.files);
+      if (paste_file_rename && event.clipboardData.files.length == 1 && event.clipboardData.files[0].name == 'image.png') {
+        const filesArray = await Array.from(event.clipboardData.files);
+        showRenameImageDialog(event.clipboardData.files[0].name, event.clipboardData.files[0], async (new_name) => {
+          const renamedFilesArray = await Promise.all(
+            filesArray.map(async (file) => {
+              const arrayBuffer = await file.arrayBuffer();
+              const renamedFile = new File([arrayBuffer], new_name, {
+                type: file.type,
+                lastModified: file.lastModified,
+              });
+              return renamedFile;
+            })
+          );
+          const dataTransfer = new DataTransfer();
+          renamedFilesArray.forEach(file => dataTransfer.items.add(file));
+
+          const renamedFileList = dataTransfer.files;
+          await uploadMultiFiles(renamedFileList);
+        })
+      } else {
+        await uploadMultiFiles(event.clipboardData.files);
+      }
+
     }
   };
+
+  const update_memo_modify = () => {
+    if (memoId) {
+      memoStore.getMemoById(memoId ?? UNKNOWN_ID).then((memo) => {
+        if (memo) {
+          if(editorRef.current?.getContent() != memo.content) {
+            set_modify(true)
+          }
+          else {
+            set_modify(false)
+          }
+        }
+      });
+    }
+  }
+
+  const update_number_list = (content: string) => {
+    let new_content: String[] = []
+    const line_list = content.split("\n")
+    let last_idx_dict : { [key: number]: number } = {}
+    let last_lv = 0
+    const number_regexp = /^( *)(\d+)\. (.*)$/
+    const list_regexp = /^( *)([-|\*]) (.*)$/
+
+    let cursor_line = editorRef.current?.getCursorLineNumber();
+    if (cursor_line == null) {
+      return
+    }
+
+    for (let i = 0; i < line_list.length; i++) {
+      const match = line_list[i].match(number_regexp)
+      const match_list = line_list[i].match(list_regexp)
+      if (!match && !match_list) {
+        last_idx_dict[last_lv] = 0
+        new_content.push(line_list[i])
+        for (let key in last_idx_dict) {
+          delete last_idx_dict[key]
+        }
+        continue
+      }
+      if (match) {
+        const number = parseInt(match[2])
+        const lv = match[1].length/TAB_SPACE_WIDTH
+        const last_idx = last_idx_dict[lv] || 0
+        if (last_idx == 9999) {
+          new_content.push(match[1] + "- " + match[3])
+          last_idx_dict[lv] = 9999
+        }
+        else if (number == last_idx + 1) {
+          new_content.push(line_list[i])
+          last_idx_dict[lv] = number
+        }
+        else {
+          new_content.push(match[1] + (last_idx + 1).toString() + ". " + match[3])
+          last_idx_dict[lv] = last_idx + 1
+        }
+        for (let key in last_idx_dict) {
+          if (parseInt(key) > lv) {
+            delete last_idx_dict[key]
+          }
+        }
+      }
+      else if (match_list) {
+        const lv = match_list[1].length/TAB_SPACE_WIDTH
+        const last_idx = last_idx_dict[lv]
+        if (last_idx != undefined && last_idx != 9999)
+        {
+          new_content.push(match_list[1] + (last_idx + 1).toString() + ". " + match_list[3])
+          last_idx_dict[lv] = last_idx + 1
+        }
+        else {
+          new_content.push(line_list[i])
+          last_idx_dict[lv] = 9999
+        }
+        for (let key in last_idx_dict) {
+          if (parseInt(key) > lv) {
+            delete last_idx_dict[key]
+          }
+        }
+      }
+    }
+    const new_content_str = new_content.join("\n")
+    if (new_content_str != content) {
+      editorRef.current?.setContent(new_content_str)
+    }
+  }
 
   const handleContentChange = (content: string) => {
     setHasContent(content !== "");
     setContentCache(content);
+    update_memo_modify();
+    if(show_word_cnt) {
+      set_word_cnt(cal_valid_word_cnt(content))
+    }
+    if (content !== "") {
+      setContentCache(content);
+    } else {
+      localStorage.removeItem(contentCacheKey);
+    }
+    update_number_list(content);
+  };
+
+  const check_relation_memo_exist = async (memoId: number) => {
+    const id = Number(memoId);
+    if (isNaN(id)) {
+      return false;
+    }
+
+    try {
+      const { memo } = await memoServiceClient.getMemo({id,});
+      if (!memo) {
+        return false;
+      }
+    } catch (error: any) {
+      return false;
+    }
+    return true;
+
   };
 
   const handleSaveBtnClick = async () => {
     if (state.isRequesting) {
       return;
     }
-
+    const content = editorRef.current?.getContent() ?? "";
+    if (content == "" && state.resourceList.length == 0) {
+      toast.error("内容不能为空");
+      return;
+    }
     setState((state) => {
       return {
         ...state,
         isRequesting: true,
       };
     });
-    const content = editorRef.current?.getContent() ?? "";
+    const LINK_REG = /\[[^\]\[]+\]\(\/m\/(\d+)\)/g;
+    const matchResult = Array.from(new Set(content.match(LINK_REG)));
+    let relations: MemoRelation[] = [];
     try {
       if (memoId && memoId !== UNKNOWN_ID) {
         const prevMemo = await memoStore.getMemoById(memoId ?? UNKNOWN_ID);
-
+        if (matchResult) {
+          const filteredMatchResult = await Promise.all(
+            matchResult.map(async (match) => {
+              const memoId = parseInt(match.split("]")[1].split("m/")[1]);
+              const exists = await check_relation_memo_exist(memoId);
+              if (exists) {
+                return {
+                  memoId: prevMemo.id,
+                  relatedMemoId: memoId,
+                  type: "REFERENCE" as MemoRelationType,
+                };
+              }
+              return {
+                memoId: -999,
+                relatedMemoId: memoId,
+                type: "REFERENCE" as MemoRelationType,
+              };
+            })
+          );
+          relations = filteredMatchResult.filter(item => item.memoId != -999);
+        }
         if (prevMemo) {
           await memoStore.patchMemo({
             id: prevMemo.id,
             content,
             visibility: state.memoVisibility,
             resourceIdList: state.resourceList.map((resource) => resource.id),
-            relationList: state.relationList,
+            relationList: relations,
           });
         }
       } else {
+        if (matchResult) {
+          const filteredMatchResult = await Promise.all(
+            matchResult.map(async (match) => {
+              const memoId = parseInt(match.split("]")[1].split("m/")[1]);
+              const exists = await check_relation_memo_exist(memoId);
+              if (exists) {
+                return {
+                  memoId: UNKNOWN_ID,
+                  relatedMemoId: memoId,
+                  type: "REFERENCE" as MemoRelationType,
+                };
+              }
+              return {
+                memoId: -999,
+                relatedMemoId: memoId,
+                type: "REFERENCE" as MemoRelationType,
+              };
+            })
+          );
+          relations = filteredMatchResult.filter(item => item.memoId != -999);
+        }
         await memoStore.createMemo({
           content,
           visibility: state.memoVisibility,
           resourceIdList: state.resourceList.map((resource) => resource.id),
-          relationList: state.relationList,
+          relationList: relations,
         });
-        filterStore.clearFilter();
       }
+      editorRef.current?.setContent("");
     } catch (error: any) {
       console.error(error);
       toast.error(error.response.data.message);
@@ -488,69 +793,48 @@ const MemoEditor = (props: Props) => {
       };
     });
 
-    // Upsert tag with the content.
     const matchedNodes = getMatchedNodes(content);
     const tagNameList = uniq(matchedNodes.filter((node) => node.parserName === "tag").map((node) => node.matchedContent.slice(1)));
     for (const tagName of tagNameList) {
       await tagStore.upsertTag(tagName);
     }
 
+    setState((state) => {
+      return {
+        ...state,
+        fullscreen: false,
+      };
+    });
+
     setState((prevState) => ({
       ...prevState,
       resourceList: [],
-      relationList: [],
     }));
-    editorRef.current?.setContent("");
-    clearContentQueryParam();
     if (onConfirm) {
       onConfirm();
     }
   };
 
+  const handleFullscreenBtnClick = useCallback(() => {
+    setState((state) => {
+      return {
+        ...state,
+        fullscreen: !state.fullscreen,
+      };
+    });
+  }, []);
+
   const handleCheckBoxBtnClick = () => {
     if (!editorRef.current) {
       return;
     }
-    const currentPosition = editorRef.current?.getCursorPosition();
-    const currentLineNumber = editorRef.current?.getCursorLineNumber();
-    const currentLine = editorRef.current?.getLine(currentLineNumber);
-    let newLine = "";
-    let cursorChange = 0;
-    if (/^- \[( |x|X)\] /.test(currentLine)) {
-      newLine = currentLine.replace(/^- \[( |x|X)\] /, "");
-      cursorChange = -6;
-    } else if (/^\d+\. |- /.test(currentLine)) {
-      const match = currentLine.match(/^\d+\. |- /) ?? [""];
-      newLine = currentLine.replace(/^\d+\. |- /, "- [ ] ");
-      cursorChange = -match[0].length + 6;
-    } else {
-      newLine = "- [ ] " + currentLine;
-      cursorChange = 6;
-    }
-    editorRef.current?.setLine(currentLineNumber, newLine);
-    editorRef.current.setCursorPosition(currentPosition + cursorChange);
-    editorRef.current?.scrollToCursor();
-  };
-
-  const handleRefBtnClick = () => {
-    if (!editorRef.current) {
-      return;
-    }
-
-    const cursorPosition = editorRef.current.getCursorPosition();
-    const prevValue = editorRef.current.getContent().slice(0, cursorPosition);
-    if (prevValue === "" || prevValue.endsWith("\n")) {
-      editorRef.current?.insertText("", "参考：[](", ")");
-    } else {
-      editorRef.current?.insertText("", "\n参考：[](", ")");
-    }
+    editorRef.current?.insertText("- [ ] ", "");
   };
 
   const handleInsertTableBtnClick = () => {
     if (!editorRef.current) {
       return;
     }
-
     editorRef.current?.insertText("", "|", "||\n|:--:|:--:|\n|||");
   };
 
@@ -564,7 +848,6 @@ const MemoEditor = (props: Props) => {
     const cursor_line_num = calculateCursorLinePosition(content_splt, cursorPosition);
     const table_first_line = findFirstPipeLine(content_splt, cursor_line_num);
     if (table_first_line == -1) {
-      toast.error("请在光标置于表格中使用~")
       return
     }
 
@@ -603,10 +886,9 @@ const MemoEditor = (props: Props) => {
     const cursor_line_num = calculateCursorLinePosition(content_splt, cursorPosition);
     const table_first_line = findFirstPipeLine(content_splt, cursor_line_num);
     if (table_first_line == -1) {
-      toast.error("请在光标置于表格中使用~")
       return
     }
-    let maxCount = 0; // 最大的竖线数量
+    let maxCount = 0;
 
     let line_num = -1
     let empty_happend = false
@@ -621,9 +903,9 @@ const MemoEditor = (props: Props) => {
         break
       }
 
-      const count = str.split('|').length - 1; // 计算当前字符串中竖线的数量
+      const count = str.split('|').length - 1;
       if (count > maxCount) {
-        maxCount = count; // 更新最大的竖线数量
+        maxCount = count;
       }
     }
     if (empty_happend) {
@@ -645,34 +927,135 @@ const MemoEditor = (props: Props) => {
     if (!editorRef.current) {
       return;
     }
-
-    editorRef.current?.insertText("", "[MEMO](/m/", ") ");
-  };
-
-  const handleConvertBtnClick = () => {
-    if (!editorRef.current) {
-      return;
+    const content_select = editorRef.current.getSelectedContent();
+    if (content_select.length == 0) {
+      editorRef.current?.insertText("", "[MEMO](/m/", ")");
     }
-
-    editorRef.current?.insertText("", "帮我整理:");
+    else {
+      editorRef.current?.insertText("", "[");
+      editorRef.current?.insertText("", "](/m/", ")");
+    }
   };
 
   const handleCodeBlockBtnClick = () => {
     if (!editorRef.current) {
       return;
     }
-
-    const cursorPosition = editorRef.current.getCursorPosition();
-    const prevValue = editorRef.current.getContent().slice(0, cursorPosition);
-    if (prevValue === "" || prevValue.endsWith("\n")) {
-      editorRef.current?.insertText("", "```\n", "\n```");
-    } else {
-      editorRef.current?.insertText("", "\n```\n", "\n```");
-    }
+    editorRef.current?.insertText("", "\n```\n", "\n```");
   };
 
   const handleTagSelectorClick = useCallback((tag: string) => {
     editorRef.current?.insertText(`#${tag} `);
+  }, []);
+
+  const insert_to_begin = (content: string) => {
+    const cursorPosition = editorRef.current?.getCursorPosition() ?? 0;
+    editorRef.current?.setCursorPosition(0);
+    editorRef.current?.insertText(content);
+    editorRef.current?.setCursorPosition(cursorPosition + content.length);
+  }
+
+  const handleRestoreContentClick = () => {
+    if (memoId) {
+      memoStore.getMemoById(memoId ?? UNKNOWN_ID).then((memo) => {
+        if (memo) {
+          editorRef.current?.setContent(memo.content ?? "");
+        }
+      });
+      set_modify(false)
+    }
+  }
+
+  function replaceDateTime(str: string): string {
+    let lan = 'en'
+    if (str.includes('$datetime-zh')) {
+      lan = 'zh-cn'
+      str = str.replace('$datetime-zh', '$datetime')
+    }
+    let djs = dayjs().locale(lan)
+    return str.replace(/\$datetime(|[^:]+)*:(.*?)\$/g, (match, bias, format) => {
+      if (bias) {
+        const bias_list = bias.slice(1).split(',')
+        for (let i = 0; i < bias_list.length; i++) {
+          const bias_str = bias_list[i]
+          if (bias_str.startsWith('+')) {
+            djs = djs.add(parseInt(bias_str[1]), bias_str[2])
+          }
+          else if (bias_str.startsWith('-')) {
+            djs = djs.subtract(parseInt(bias_str[1]), bias_str[2])
+          }
+        }
+        return djs.format(format);
+      } else {
+        return djs.format(format);
+      }
+    });
+  }
+
+  async function replaceClipboardPlaceholderSync(inputString: string): Promise<string> {
+    const clipboardText = await navigator.clipboard.readText().catch(err => {
+        return '';
+    });
+    return inputString.replace(/\$CLIPBOARD\$/g, clipboardText);
+  }
+
+  const handleCustomShortcut = async (shortcut: string) => {
+    if (!editorRef.current) {
+      return;
+    }
+    const content_select = editorRef.current.getSelectedContent();
+    if (content_select) {
+      editorRef.current.removeText(editorRef.current.getCursorPosition(), content_select.length);
+    }
+    shortcut = replaceDateTime(shortcut);
+    if (shortcut.includes("$CLIPBOARD$")) {
+      shortcut = await replaceClipboardPlaceholderSync(shortcut);
+    }
+    if (shortcut.includes("$SELECT$")) {
+      shortcut = shortcut.replace("$SELECT$", content_select)
+    }
+    if (shortcut.startsWith("^")) {
+      const cursorPosition = editorRef.current.getCursorPosition();
+      const prevValue = editorRef.current.getContent().slice(0, cursorPosition);
+      if (prevValue.endsWith("\n")) {
+        shortcut = shortcut.slice(1);
+      }
+      else {
+        shortcut = "\n" + shortcut.slice(1);
+      }
+    }
+    if (shortcut.includes("$CURSOR$")) {
+      const cursor_pos = shortcut.indexOf("$CURSOR$")
+      shortcut = shortcut.replace("$CURSOR$", "")
+      editorRef.current.insertText("", shortcut.substring(0, cursor_pos), shortcut.substring(cursor_pos));
+    }
+    else {
+      editorRef.current.insertText(shortcut);
+    }
+  };
+
+  const handleInputActionClick = useCallback((action: string) => {
+    if (action == "checkbox") {
+      handleCheckBoxBtnClick()
+    }
+    else if (action == "code") {
+      handleCodeBlockBtnClick()
+    }
+    else if (action == "add_table") {
+      handleInsertTableBtnClick()
+    }
+    else if (action == "add_col") {
+      handleAddColBtnClick()
+    }
+    else if (action == "add_row") {
+      handleAddRowBtnClick()
+    }
+    else if (action.startsWith("custom_shortcut_")) {
+      const shortcut = action.split("custom_shortcut_")[1]
+      if (shortcut) {
+        handleCustomShortcut(shortcut)
+      }
+    }
   }, []);
 
   const handleEditorFocus = () => {
@@ -681,20 +1064,32 @@ const MemoEditor = (props: Props) => {
 
   const editorConfig = useMemo(
     () => ({
-      className: `memo-editor`,
+      className: editorClassName ?? "",
       initialContent: "",
+      fullscreen: state.fullscreen,
       placeholder: t("editor.placeholder"),
       onContentChange: handleContentChange,
       onPaste: handlePasteEvent,
     }),
-    [i18n.language]
+    [state.fullscreen, i18n.language]
   );
 
   const allowSave = (hasContent || state.resourceList.length > 0) && !state.isUploadingResource && !state.isRequesting;
 
+  const disableOption = (v: string) => {
+    const isAdminOrHost = currentUser.role === User_Role.ADMIN || currentUser.role === User_Role.HOST;
+
+    if (v === "PUBLIC" && !isAdminOrHost) {
+      return systemStatus.disablePublicMemos;
+    }
+    return false;
+  };
+
   return (
     <div
-      className={`${className ?? ""} memo-editor-container`}
+      className={`${
+        className ?? ""
+      } w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-700 rounded-lg border-2 border-gray-200 dark:border-zinc-600 ${state.fullscreen ? "transition-all fixed w-full h-full top-0 left-0 z-1000 rounded-none dark:bg-zinc-800" : "px-4 pt-4"} `}
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onDrop={handleDropEvent}
@@ -702,50 +1097,83 @@ const MemoEditor = (props: Props) => {
       onCompositionStart={() => setIsInIME(true)}
       onCompositionEnd={() => setIsInIME(false)}
     >
-      <Editor ref={editorRef} {...editorConfig} />
-      <div className="common-tools-wrapper">
-        <div className="common-tools-container">
-          <TagSelector onTagSelectorClick={(tag) => handleTagSelectorClick(tag)} />
-          <button className="action-btn">
-            <Icon.Tags className="icon-img" onClick={handleAddTagClick} />
-          </button>
-          <button className="action-btn">
-            <Icon.Link className="icon-img" onClick={handleMarkBtnClick} />
-          </button>
-          <button className="action-btn">
-            <Icon.Copyright className="icon-img" onClick={handleRefBtnClick} />
-          </button>
-          <button className="action-btn">
-            <Icon.ReplaceAll  className="icon-img" onClick={handleConvertBtnClick} />
-          </button>
-          <button className="action-btn">
-            <Icon.Table  className="icon-img" onClick={handleInsertTableBtnClick} />
-          </button>
-           <button className="action-btn">
-            <Icon.ArrowRightToLine   className="icon-img" onClick={handleAddColBtnClick} />
-          </button>
-          <button className="action-btn">
-            <Icon.ArrowDownToLine  className="icon-img" onClick={handleAddRowBtnClick} />
-          </button>
-          <button className="action-btn">
-          <Icon.Paperclip className="icon-img" onClick={handleUploadFileBtnClick} />
-          </button>
-          <button className="action-btn">
-            <Icon.CheckSquare className="icon-img" onClick={handleCheckBoxBtnClick} />
-          </button>
-          <button className="action-btn">
-            <Icon.Code className="icon-img" onClick={handleCodeBlockBtnClick} />
-          </button>
+      <Editor ref={editorRef} {...editorConfig} className={`${state.fullscreen ? "p-4 mb-4 rounded-lg border flex flex-col flex-grow justify-start items-start relative w-full h-full bg-white " : ""}`}/>
+      <div className="relative w-full flex flex-row justify-between items-center pt-2 z-1">
+        <div className="flex flex-row justify-start items-center">
+          {show_tag_selector && <TagSelector onTagSelectorClick={(tag) => handleTagSelectorClick(tag)} fullScreen={state.fullscreen}/>}
+          <IconButton className="flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow">
+            <Icon.Link className="w-5 h-5 mx-auto" onClick={handleMarkBtnClick}/>
+          </IconButton>
+          <IconButton className="md:!hidden flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow">
+            <Icon.ArrowRightFromLine className="w-5 h-5 mx-auto" onClick={handleIndent}/>
+          </IconButton>
+          <IconButton className="md:!hidden flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow" >
+            <Icon.ArrowLeftFromLine className="w-5 h-5 mx-auto" onClick={handleAntiIndent}/>
+          </IconButton>
+          {
+            mobile_show_list.map((item) => {
+              return <Tooltip title={item["tips"] || item["content"]} placement="bottom" key={"custom_shortcut_mobile_"+item["name"]}><IconButton className="md:!hidden flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow" onClick={() => handleCustomShortcut(item['content'])}>
+                <CustomIcon name={item["icon"] || "User"}/>
+              </IconButton></Tooltip>
+            })
+          }
+          {
+            pc_show_list.map((item) => {
+              return <Tooltip title={item["tips"] || item["content"]} placement="bottom" key={"custom_shortcut_pc_"+item["name"]} ><IconButton className="!hidden md:!block flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow" onClick={() => handleCustomShortcut(item['content'])}>
+                <CustomIcon name={item["icon"] || "User"}/>
+              </IconButton></Tooltip>
+            })
+          }
+          <InputActionSelector onActionSelectorClick={(action) => handleInputActionClick(action)} fullScreen={state.fullscreen} />
+          <IconButton className="flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow" >
+            <Icon.Image className="w-5 h-5 mx-auto" onClick={handleUploadFileBtnClick} />
+          </IconButton>
+          {use_excalidraw && <IconButton className="flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow" >
+            <Icon.Spline className="w-5 h-5 mx-auto" onClick={handleExcalidrawClick} />
+          </IconButton>}
+          <IconButton className="action-btn">
+            {state.fullscreen ? <Icon.Minimize className="w-5 h-5 mx-auto"  onClick={handleFullscreenBtnClick}/> : <Icon.Maximize className="w-5 h-5 mx-auto"  onClick={handleFullscreenBtnClick}/>}
+          </IconButton>
+          {has_modify && (
+            <>
+              <IconButton className={`flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer hover:bg-gray-300 hover:shadow ${!has_modify ? 'hidden' : ''}`} style={{ color: "#CC0000" }} >
+                <Icon.ListRestartIcon id="content_restore" className="w-5 h-5 mx-auto" onClick={handleRestoreContentClick} />
+              </IconButton>
+            </>
+          )}
         </div>
       </div>
-      <ResourceListView resourceList={state.resourceList} setResourceList={handleSetResourceList} />
-      <RelationListView relationList={state.relationList} setRelationList={handleSetRelationList} />
-      <div className="editor-footer-container">
-        <MemoVisibilitySelector value={state.memoVisibility} onChange={handleMemoVisibilityChange} />
-        <div className="buttons-container">
-          <button className="action-btn confirm-btn" disabled={!allowSave} onClick={handleSaveBtnClick}>
+      <div className="flex flex-row items-center">
+        <ResourceListView resourceList={state.resourceList} setResourceList={handleSetResourceList} />
+      </div>
+      <RelationListView memoId={memoId} content={editorRef.current?.getContent() ?? ""} relationList={referenceRelations} setRelationList={handleSetRelationList} />
+      <Divider className="!mt-2" />
+      <div className="w-full flex flex-row justify-between items-center py-3 ">
+        <div className="relative flex flex-row justify-start items-center" onFocus={(e) => e.stopPropagation()}>
+          {show_memo_public && <Select
+            variant="plain"
+            value={state.memoVisibility}
+            startDecorator={<VisibilityIcon visibility={state.memoVisibility} />}
+            onChange={(_, visibility) => {
+              if (visibility) {
+                handleMemoVisibilityChange(visibility);
+              }
+            }}
+          >
+            {VISIBILITY_SELECTOR_ITEMS.map((item) => (
+              <Option key={item} value={item} className="whitespace-nowrap" disabled={disableOption(item)}>
+                {t(`memo.visibility.${item.toLowerCase() as Lowercase<typeof item>}`)}
+              </Option>
+            ))}
+          </Select>}
+        </div>
+        <div className="shrink-0 flex flex-row justify-end items-center">
+        {show_word_cnt && (word_cnt>0 || hasContent) && (
+          <span className="pr-4 text-xs text-gray-500 ">有效字数: {word_cnt}</span>
+        )}
+          <Button color="success" disabled={!allowSave} onClick={handleSaveBtnClick}>
             {t("editor.save")}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

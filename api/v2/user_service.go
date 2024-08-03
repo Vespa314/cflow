@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -23,27 +24,16 @@ import (
 )
 
 var (
-	usernameMatcher = regexp.MustCompile("^[a-z]([a-z0-9-]{1,30}[a-z0-9])?$")
+	usernameMatcher = regexp.MustCompile("^[a-z0-9]([a-z0-9-]{1,30}[a-z0-9])$")
 )
 
-type UserService struct {
-	apiv2pb.UnimplementedUserServiceServer
-
-	Store  *store.Store
-	Secret string
-}
-
-// NewUserService creates a new UserService.
-func NewUserService(store *store.Store, secret string) *UserService {
-	return &UserService{
-		Store:  store,
-		Secret: secret,
+func (s *APIV2Service) GetUser(ctx context.Context, request *apiv2pb.GetUserRequest) (*apiv2pb.GetUserResponse, error) {
+	username, err := ExtractUsernameFromName(request.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
 	}
-}
-
-func (s *UserService) GetUser(ctx context.Context, request *apiv2pb.GetUserRequest) (*apiv2pb.GetUserResponse, error) {
 	user, err := s.Store.GetUser(ctx, &store.FindUser{
-		Username: &request.Username,
+		Username: &username,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
@@ -59,74 +49,433 @@ func (s *UserService) GetUser(ctx context.Context, request *apiv2pb.GetUserReque
 	return response, nil
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, request *apiv2pb.UpdateUserRequest) (*apiv2pb.UpdateUserResponse, error) {
+func (s *APIV2Service) CreateUser(ctx context.Context, request *apiv2pb.CreateUserRequest) (*apiv2pb.CreateUserResponse, error) {
 	currentUser, err := getCurrentUser(ctx, s.Store)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
 	}
-	if currentUser.Username != request.Username && currentUser.Role != store.RoleAdmin {
+	if currentUser.Role != store.RoleHost {
 		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
 	}
-	if request.UpdateMask == nil || len(request.UpdateMask) == 0 {
+
+	username, err := ExtractUsernameFromName(request.User.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
+	}
+	if !usernameMatcher.MatchString(strings.ToLower(username)) {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid username: %s", username)
+	}
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(request.User.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to generate password hash").SetInternal(err)
+	}
+
+	user, err := s.Store.CreateUser(ctx, &store.User{
+		Username:     username,
+		Role:         convertUserRoleToStore(request.User.Role),
+		Email:        request.User.Email,
+		Nickname:     request.User.Nickname,
+		PasswordHash: string(passwordHash),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
+	}
+
+	response := &apiv2pb.CreateUserResponse{
+		User: convertUserFromStore(user),
+	}
+	return response, nil
+}
+
+func (s *APIV2Service) UpdateUser(ctx context.Context, request *apiv2pb.UpdateUserRequest) (*apiv2pb.UpdateUserResponse, error) {
+	username, err := ExtractUsernameFromName(request.User.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
+	}
+	currentUser, err := getCurrentUser(ctx, s.Store)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
+	}
+	if currentUser.Username != username && currentUser.Role != store.RoleAdmin && currentUser.Role != store.RoleHost {
+		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+	}
+	if request.UpdateMask == nil || len(request.UpdateMask.Paths) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "update mask is empty")
+	}
+
+	user, err := s.Store.GetUser(ctx, &store.FindUser{Username: &username})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
+	}
+	if user == nil {
+		return nil, status.Errorf(codes.NotFound, "user not found")
 	}
 
 	currentTs := time.Now().Unix()
 	update := &store.UpdateUser{
-		ID:        currentUser.ID,
+		ID:        user.ID,
 		UpdatedTs: &currentTs,
 	}
-	for _, path := range request.UpdateMask {
-		if path == "username" {
-			if !usernameMatcher.MatchString(strings.ToLower(request.User.Username)) {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid username: %s", request.User.Username)
+	for _, field := range request.UpdateMask.Paths {
+		if field == "username" {
+			if !usernameMatcher.MatchString(strings.ToLower(username)) {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid username: %s", username)
 			}
-			update.Username = &request.User.Username
-		} else if path == "nickname" {
+			update.Username = &username
+		} else if field == "nickname" {
 			update.Nickname = &request.User.Nickname
-		} else if path == "email" {
+		} else if field == "email" {
 			update.Email = &request.User.Email
-		} else if path == "avatar_url" {
+		} else if field == "avatar_url" {
 			update.AvatarURL = &request.User.AvatarUrl
-		} else if path == "role" {
+		} else if field == "role" {
 			role := convertUserRoleToStore(request.User.Role)
 			update.Role = &role
-		} else if path == "password" {
+		} else if field == "password" {
 			passwordHash, err := bcrypt.GenerateFromPassword([]byte(request.User.Password), bcrypt.DefaultCost)
 			if err != nil {
 				return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to generate password hash").SetInternal(err)
 			}
 			passwordHashStr := string(passwordHash)
 			update.PasswordHash = &passwordHashStr
-		} else if path == "row_status" {
+		} else if field == "row_status" {
 			rowStatus := convertRowStatusToStore(request.User.RowStatus)
 			update.RowStatus = &rowStatus
 		} else {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid update path: %s", path)
+			return nil, status.Errorf(codes.InvalidArgument, "invalid update path: %s", field)
 		}
 	}
 
-	user, err := s.Store.UpdateUser(ctx, update)
+	updatedUser, err := s.Store.UpdateUser(ctx, update)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update user: %v", err)
 	}
 
 	response := &apiv2pb.UpdateUserResponse{
-		User: convertUserFromStore(user),
+		User: convertUserFromStore(updatedUser),
 	}
 	return response, nil
 }
 
-func (s *UserService) ListUserAccessTokens(ctx context.Context, request *apiv2pb.ListUserAccessTokensRequest) (*apiv2pb.ListUserAccessTokensResponse, error) {
+func (s *APIV2Service) DeleteUser(ctx context.Context, request *apiv2pb.DeleteUserRequest) (*apiv2pb.DeleteUserResponse, error) {
+	username, err := ExtractUsernameFromName(request.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
+	}
+	currentUser, err := getCurrentUser(ctx, s.Store)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
+	}
+	if currentUser.Username != username && currentUser.Role != store.RoleAdmin && currentUser.Role != store.RoleHost {
+		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+	}
+
+	user, err := s.Store.GetUser(ctx, &store.FindUser{Username: &username})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
+	}
+	if user == nil {
+		return nil, status.Errorf(codes.NotFound, "user not found")
+	}
+
+	if err := s.Store.DeleteUser(ctx, &store.DeleteUser{
+		ID: user.ID,
+	}); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete user: %v", err)
+	}
+
+	return &apiv2pb.DeleteUserResponse{}, nil
+}
+
+func getDefaultUserSetting() *apiv2pb.UserSetting {
+	return &apiv2pb.UserSetting{
+		Locale:          "zh-Hans",
+		Appearance:      "system",
+		MemoVisibility:  "PRIVATE",
+		ShowWordCnt:     true,
+		MarkWithTag:     false,
+		CustomShortcut:  "",
+		FavTag:          "",
+		RefPreview:      true,
+		ShowTodoPage:    true,
+		ShowArchivePage: true,
+		PasteRename:     false,
+		ShowTagSelector: true,
+		ShowMemoPublic:  false,
+		CustomCardStyle: "",
+		DoubleClickEdit: true,
+		UseExcalidraw:   false,
+	}
+}
+
+func (s *APIV2Service) GetUserSetting(ctx context.Context, _ *apiv2pb.GetUserSettingRequest) (*apiv2pb.GetUserSettingResponse, error) {
 	user, err := getCurrentUser(ctx, s.Store)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
 	}
-	if user == nil || user.Username != request.Username {
+
+	userSettings, err := s.Store.ListUserSettingsV1(ctx, &store.FindUserSetting{
+		UserID: &user.ID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list user settings: %v", err)
+	}
+	userSettingMessage := getDefaultUserSetting()
+	for _, setting := range userSettings {
+		if setting.Key == storepb.UserSettingKey_USER_SETTING_LOCALE {
+			userSettingMessage.Locale = setting.GetLocale()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_APPEARANCE {
+			userSettingMessage.Appearance = setting.GetAppearance()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_MEMO_VISIBILITY {
+			userSettingMessage.MemoVisibility = setting.GetMemoVisibility()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_SHOW_WORD_CNT {
+			userSettingMessage.ShowWordCnt = setting.GetShowWordCnt()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_MARK_WITH_TAG {
+			userSettingMessage.MarkWithTag = setting.GetMarkWithTag()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_CUSTOM_SHORTCUT {
+			userSettingMessage.CustomShortcut = setting.GetCustomShortcut()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_FAV_TAG {
+			userSettingMessage.FavTag = setting.GetFavTag()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_REF_PREVIEW {
+			userSettingMessage.RefPreview = setting.GetRefPreview()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_SHOW_TODO_PAGE {
+			userSettingMessage.ShowTodoPage = setting.GetShowTodoPage()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_SHOW_ARCHIVE_PAGE {
+			userSettingMessage.ShowArchivePage = setting.GetShowArchivePage()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_PASTE_RENAME {
+			userSettingMessage.PasteRename = setting.GetPasteRename()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_SHOW_TAG_SELECTOR {
+			userSettingMessage.ShowTagSelector = setting.GetShowTagSelector()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_SHOW_MEMO_PUBLIC {
+			userSettingMessage.ShowMemoPublic = setting.GetShowMemoPublic()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_CUSTOM_CARD_STYLE {
+			userSettingMessage.CustomCardStyle = setting.GetCustomCardStyle()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_DOUBLE_CLICK_EDIT {
+			userSettingMessage.DoubleClickEdit = setting.GetDoubleClickEdit()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_USE_EXCALIDRAW {
+			userSettingMessage.UseExcalidraw = setting.GetUseExcalidraw()
+		}
+	}
+	return &apiv2pb.GetUserSettingResponse{
+		Setting: userSettingMessage,
+	}, nil
+}
+
+func (s *APIV2Service) UpdateUserSetting(ctx context.Context, request *apiv2pb.UpdateUserSettingRequest) (*apiv2pb.UpdateUserSettingResponse, error) {
+	user, err := getCurrentUser(ctx, s.Store)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+	}
+
+	if request.UpdateMask == nil || len(request.UpdateMask.Paths) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "update mask is empty")
+	}
+
+	for _, field := range request.UpdateMask.Paths {
+		if field == "locale" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_LOCALE,
+				Value: &storepb.UserSetting_Locale{
+					Locale: request.Setting.Locale,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "appearance" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_APPEARANCE,
+				Value: &storepb.UserSetting_Appearance{
+					Appearance: request.Setting.Appearance,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "memo_visibility" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_MEMO_VISIBILITY,
+				Value: &storepb.UserSetting_MemoVisibility{
+					MemoVisibility: request.Setting.MemoVisibility,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "show_word_cnt" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_SHOW_WORD_CNT,
+				Value: &storepb.UserSetting_ShowWordCnt{
+					ShowWordCnt: request.Setting.ShowWordCnt,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "mark_with_tag" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_MARK_WITH_TAG,
+				Value: &storepb.UserSetting_MarkWithTag{
+					MarkWithTag: request.Setting.MarkWithTag,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "custom_shortcut" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_CUSTOM_SHORTCUT,
+				Value: &storepb.UserSetting_CustomShortcut{
+					CustomShortcut: request.Setting.CustomShortcut,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "fav_tag" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_FAV_TAG,
+				Value: &storepb.UserSetting_FavTag{
+					FavTag: request.Setting.FavTag,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "ref_preview" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_REF_PREVIEW,
+				Value: &storepb.UserSetting_RefPreview{
+					RefPreview: request.Setting.RefPreview,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "show_todo_page" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_SHOW_TODO_PAGE,
+				Value: &storepb.UserSetting_ShowTodoPage{
+					ShowTodoPage: request.Setting.ShowTodoPage,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "show_archive_page" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_SHOW_ARCHIVE_PAGE,
+				Value: &storepb.UserSetting_ShowArchivePage{
+					ShowArchivePage: request.Setting.ShowArchivePage,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "paste_rename" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_PASTE_RENAME,
+				Value: &storepb.UserSetting_PasteRename{
+					PasteRename: request.Setting.PasteRename,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "show_tag_selector" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_SHOW_TAG_SELECTOR,
+				Value: &storepb.UserSetting_ShowTagSelector{
+					ShowTagSelector: request.Setting.ShowTagSelector,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "show_memo_public" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_SHOW_MEMO_PUBLIC,
+				Value: &storepb.UserSetting_ShowMemoPublic{
+					ShowMemoPublic: request.Setting.ShowMemoPublic,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "custom_card_style" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_CUSTOM_CARD_STYLE,
+				Value: &storepb.UserSetting_CustomCardStyle{
+					CustomCardStyle: request.Setting.CustomCardStyle,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "double_click_edit" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_DOUBLE_CLICK_EDIT,
+				Value: &storepb.UserSetting_DoubleClickEdit{
+					DoubleClickEdit: request.Setting.DoubleClickEdit,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "use_excalidraw" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_USE_EXCALIDRAW,
+				Value: &storepb.UserSetting_UseExcalidraw{
+					UseExcalidraw: request.Setting.UseExcalidraw,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid update path: %s", field)
+		}
+	}
+
+	userSettingResponse, err := s.GetUserSetting(ctx, &apiv2pb.GetUserSettingRequest{})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user setting: %v", err)
+	}
+	return &apiv2pb.UpdateUserSettingResponse{
+		Setting: userSettingResponse.Setting,
+	}, nil
+}
+
+func (s *APIV2Service) ListUserAccessTokens(ctx context.Context, request *apiv2pb.ListUserAccessTokensRequest) (*apiv2pb.ListUserAccessTokensResponse, error) {
+	user, err := getCurrentUser(ctx, s.Store)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
+	}
+	if user == nil {
 		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
 	}
 
-	userAccessTokens, err := s.Store.GetUserAccessTokens(ctx, user.ID)
+	userID := user.ID
+	username, err := ExtractUsernameFromName(request.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
+	}
+	// List access token for other users need to be verified.
+	if user.Username != username {
+		// Normal users can only list their access tokens.
+		if user.Role == store.RoleUser {
+			return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+		}
+
+		// The request user must be exist.
+		requestUser, err := s.Store.GetUser(ctx, &store.FindUser{Username: &username})
+		if requestUser == nil || err != nil {
+			return nil, status.Errorf(codes.NotFound, "fail to find user %s", username)
+		}
+		userID = requestUser.ID
+	}
+
+	userAccessTokens, err := s.Store.GetUserAccessTokens(ctx, userID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list access tokens: %v", err)
 	}
@@ -162,8 +511,8 @@ func (s *UserService) ListUserAccessTokens(ctx context.Context, request *apiv2pb
 	}
 
 	// Sort by issued time in descending order.
-	slices.SortFunc(accessTokens, func(i, j *apiv2pb.UserAccessToken) bool {
-		return i.IssuedAt.Seconds > j.IssuedAt.Seconds
+	slices.SortFunc(accessTokens, func(i, j *apiv2pb.UserAccessToken) int {
+		return int(i.IssuedAt.Seconds - j.IssuedAt.Seconds)
 	})
 	response := &apiv2pb.ListUserAccessTokensResponse{
 		AccessTokens: accessTokens,
@@ -171,7 +520,7 @@ func (s *UserService) ListUserAccessTokens(ctx context.Context, request *apiv2pb
 	return response, nil
 }
 
-func (s *UserService) CreateUserAccessToken(ctx context.Context, request *apiv2pb.CreateUserAccessTokenRequest) (*apiv2pb.CreateUserAccessTokenResponse, error) {
+func (s *APIV2Service) CreateUserAccessToken(ctx context.Context, request *apiv2pb.CreateUserAccessTokenRequest) (*apiv2pb.CreateUserAccessTokenResponse, error) {
 	user, err := getCurrentUser(ctx, s.Store)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
@@ -181,6 +530,7 @@ func (s *UserService) CreateUserAccessToken(ctx context.Context, request *apiv2p
 	if request.ExpiresAt != nil {
 		expiresAt = request.ExpiresAt.AsTime()
 	}
+
 	accessToken, err := auth.GenerateAccessToken(user.Username, user.ID, expiresAt, []byte(s.Secret))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate access token: %v", err)
@@ -221,7 +571,7 @@ func (s *UserService) CreateUserAccessToken(ctx context.Context, request *apiv2p
 	return response, nil
 }
 
-func (s *UserService) DeleteUserAccessToken(ctx context.Context, request *apiv2pb.DeleteUserAccessTokenRequest) (*apiv2pb.DeleteUserAccessTokenResponse, error) {
+func (s *APIV2Service) DeleteUserAccessToken(ctx context.Context, request *apiv2pb.DeleteUserAccessTokenRequest) (*apiv2pb.DeleteUserAccessTokenResponse, error) {
 	user, err := getCurrentUser(ctx, s.Store)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get current user: %v", err)
@@ -253,7 +603,7 @@ func (s *UserService) DeleteUserAccessToken(ctx context.Context, request *apiv2p
 	return &apiv2pb.DeleteUserAccessTokenResponse{}, nil
 }
 
-func (s *UserService) UpsertAccessTokenToStore(ctx context.Context, user *store.User, accessToken, description string) error {
+func (s *APIV2Service) UpsertAccessTokenToStore(ctx context.Context, user *store.User, accessToken, description string) error {
 	userAccessTokens, err := s.Store.GetUserAccessTokens(ctx, user.ID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get user access tokens")
@@ -279,11 +629,11 @@ func (s *UserService) UpsertAccessTokenToStore(ctx context.Context, user *store.
 
 func convertUserFromStore(user *store.User) *apiv2pb.User {
 	return &apiv2pb.User{
-		Id:         int32(user.ID),
+		Name:       fmt.Sprintf("%s%s", UserNamePrefix, user.Username),
+		Id:         user.ID,
 		RowStatus:  convertRowStatusFromStore(user.RowStatus),
 		CreateTime: timestamppb.New(time.Unix(user.CreatedTs, 0)),
 		UpdateTime: timestamppb.New(time.Unix(user.UpdatedTs, 0)),
-		Username:   user.Username,
 		Role:       convertUserRoleFromStore(user.Role),
 		Email:      user.Email,
 		Nickname:   user.Nickname,
