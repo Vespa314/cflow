@@ -52,9 +52,11 @@ const TagManagerDialog: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     if (tagCounts) {
       if (sortTagCnt) {
-        setTagArray(Object.keys(tagCountsDict).filter((tag) => tagNameList.includes(tag)).sort((a, b) => tagCountsDict[b] - tagCountsDict[a] || a.localeCompare(b)));
+        let tags = Array.from(tagNameList);
+        setTagArray(tags.sort((a, b) => (tagCountsDict[b]||0) - (tagCountsDict[a]||0) || a.localeCompare(b)));
       } else {
-        setTagArray(Object.keys(tagCountsDict).filter((tag) => tagNameList.includes(tag)).sort());
+        let tags = Array.from(tagNameList);
+        setTagArray(tags.sort());
       }
     }
   }, [tagNameList, tagCountsDict, sortTagCnt]);
