@@ -34,10 +34,10 @@ const renderer = (rawStr: string) => {
 
   return (
     <pre className="group block-code mt-2">
-      <div className="language-info absolute top-0 left-0 px-2 py-1 text-xs font-mono bg-indigo-600 text-white rounded-bl-lg rounded-tr-lg">
+      <div className="language-info absolute top-0 left-0 px-2 py-1 text-xs font-mono bg-orange-200 text-orange-800 rounded-bl-lg rounded-tr-lg">
         {language}
       </div>
-      <div className="w-full h-0.5 bg-indigo-600"></div> {/* 横线，用于分隔 */}
+      <div className="w-full h-0.5 bbg-orange-200"></div> {/* 横线，用于分隔 */}
       <button
         className="code-language mr-1 mt-1 text-xs font-mono absolute top-0 right-0 px-2 leading-6 border btn-text rounded-lg "
         onClick={handleCopyButtonClick}
