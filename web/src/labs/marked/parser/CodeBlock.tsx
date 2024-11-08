@@ -34,6 +34,9 @@ const renderer = (rawStr: string) => {
 
   return (
     <pre className="group block-code">
+      <div className="language-info absolute top-0 left-0 px-2 py-1 text-xs font-mono bg-gray-800 text-white rounded-tl-lg rounded-br-lg">
+        {language}
+      </div>
       <button
         className="code-language mr-1 mt-1 text-xs font-mono absolute top-0 right-0 px-2 leading-6 border btn-text rounded-lg "
         onClick={handleCopyButtonClick}
