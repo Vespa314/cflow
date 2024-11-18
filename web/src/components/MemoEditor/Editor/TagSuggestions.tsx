@@ -4,7 +4,7 @@ import getCaretCoordinates from "textarea-caret";
 import OverflowTip from "@/components/kit/OverflowTip";
 import { useTagStore } from "@/store/module";
 import { EditorRefActions } from ".";
-import pinyin from "pinyin";
+import { pinyin } from "pinyin-pro";
 
 type Props = {
   editorRef: React.RefObject<HTMLTextAreaElement>;
@@ -14,7 +14,7 @@ type Props = {
 type Position = { left: number; top: number; height: number };
 
 function getPinyin(chineseText: string): string {
-  const pinyinArray = pinyin(chineseText, {style: pinyin.STYLE_NORMAL});
+  const pinyinArray = pinyin(chineseText, { type: 'array', toneType: 'none'});
   return pinyinArray.flat().join('');
 }
 
