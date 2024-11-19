@@ -178,7 +178,14 @@ docker run -d \
 > 国内机器可能要解决 dockerhub 被墙问题
 
 ## dockerhub
-待补充。。
+```shell
+docker run -d \
+  --name cflow \
+  --publish 5230:5230 \
+  --volume ${data_path}:/var/opt/memos \
+  vespa314/cflow:0.2 \
+  --mode prod
+```
 
 
 ## 咖啡？NO!
