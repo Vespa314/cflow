@@ -183,7 +183,7 @@ docker run -d \
   --name cflow \
   --publish 5230:5230 \
   --volume ${data_path}:/var/opt/memos \
-  vespa314/cflow:0.2 \
+  vespa314/cflow:latest \
   --mode prod
 ```
 
