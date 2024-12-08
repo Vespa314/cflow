@@ -614,11 +614,7 @@ const MemoEditor = (props: Props) => {
       const match = line_list[i].match(number_regexp)
       const match_list = line_list[i].match(list_regexp)
       if (!match && !match_list) {
-        last_idx_dict[last_lv] = 0
         new_content.push(line_list[i])
-        for (let key in last_idx_dict) {
-          delete last_idx_dict[key]
-        }
         continue
       }
       if (match) {
@@ -629,7 +625,7 @@ const MemoEditor = (props: Props) => {
           new_content.push(match[1] + "- " + match[3])
           last_idx_dict[lv] = 9999
         }
-        else if (number == last_idx + 1) {
+        else if (number == last_idx + 1 || number == 1) {
           new_content.push(line_list[i])
           last_idx_dict[lv] = number
         }
