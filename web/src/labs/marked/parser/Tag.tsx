@@ -1,6 +1,6 @@
 import { matcher } from "../matcher";
 
-export const TAG_REG = /#([^\s]+)/;
+export const TAG_REG = /#([^\s#]+)/;
 
 interface Props {
   rawStr: string;
