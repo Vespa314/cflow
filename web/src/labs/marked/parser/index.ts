@@ -26,7 +26,9 @@ import TodoList from "./TodoList";
 import UnorderedList from "./UnorderedList";
 import Sub from "./Sub";
 import Sup from "./Sup";
-
+import Underline from "./Underline";
+import Box from "./Box";
+import AlignRight from "./AlignRight";
 
 export { TAG_REG } from "./Tag";
 export { LINK_REG } from "./Link";
@@ -50,6 +52,9 @@ export const blockElementParserList = [
 ];
 
 export const inlineElementParserList = [
+  Underline,
+  Box,
+  AlignRight,
   InlineLatex,
   Image,
   BoldEmphasis,
@@ -58,11 +63,11 @@ export const inlineElementParserList = [
   Emphasis,
   Link,
   InlineCode,
+  Strikethrough,
   Sub,
   Sup,
   Highlight,
   PlainLink,
-  Strikethrough,
   Tag,
   PlainText,
 ];

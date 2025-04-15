@@ -1,4 +1,4 @@
-export const HORIZONTAL_RULES_REG = /^_{3}|^-{3}|^\*{3}/;
+export const HORIZONTAL_RULES_REG = /^-{3,}/;
 
 export const renderer = (rawStr: string) => {
   return <hr />;
