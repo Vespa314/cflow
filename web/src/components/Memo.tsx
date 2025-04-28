@@ -1,4 +1,5 @@
-import { Divider, Tooltip } from "@mui/joy";
+import { Tooltip } from "@mui/joy";
+import showPreviewImageDialog from "./PreviewImageDialog";
 import { memo, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -213,6 +214,11 @@ const Memo: React.FC<Props> = (props: Props) => {
         filterStore.setTagFilter(undefined);
       } else {
         filterStore.setTagFilter(tagName);
+      }
+    } else if (targetEl.tagName === "IMG") {
+      const imgUrl = targetEl.getAttribute("src");
+      if (imgUrl) {
+        showPreviewImageDialog([imgUrl], 0);
       }
     } else if (targetEl.classList.contains("todo-block")) {
       if (readonly) {

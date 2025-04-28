@@ -29,7 +29,7 @@ import 'dayjs/locale/zh-cn'
 
 const listItemSymbolList = ["- [ ] ", "- [x] ", "* ", "- "];
 const emptyOlReg = /^(\d+)\. $/;
-const listItemReg = /^( *)([-|\*]) (.*)/;
+const listItemReg = /^( *)([-\*]) (.*)/;
 const orderItemReg = /^( *)(\d+)\. (.*)/;
 
 const CustomIcon = ({ name }: { name: string }) => {
@@ -603,7 +603,7 @@ const MemoEditor = (props: Props) => {
     let last_idx_dict : { [key: number]: number } = {}
     let last_lv = 0
     const number_regexp = /^( *)(\d+)\. (.*)$/
-    const list_regexp = /^( *)([-|\*]) (.*)$/
+    const list_regexp = /^( *)([-\*]) (.*)$/
 
     let cursor_line = editorRef.current?.getCursorLineNumber();
     if (cursor_line == null) {
@@ -613,6 +613,7 @@ const MemoEditor = (props: Props) => {
     for (let i = 0; i < line_list.length; i++) {
       const match = line_list[i].match(number_regexp)
       const match_list = line_list[i].match(list_regexp)
+      console.log(line_list[i], match, match_list)
       if (!match && !match_list) {
         new_content.push(line_list[i])
         continue
