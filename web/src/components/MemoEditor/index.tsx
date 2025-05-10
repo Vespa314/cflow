@@ -601,6 +601,7 @@ const MemoEditor = (props: Props) => {
     let new_content: String[] = []
     const line_list = content.split("\n")
     let last_idx_dict : { [key: number]: number } = {}
+    let normal_line_appear = false
     let last_lv = 0
     const number_regexp = /^( *)(\d+)\. (.*)$/
     const list_regexp = /^( *)([-\*]) (.*)$/
@@ -613,16 +614,16 @@ const MemoEditor = (props: Props) => {
     for (let i = 0; i < line_list.length; i++) {
       const match = line_list[i].match(number_regexp)
       const match_list = line_list[i].match(list_regexp)
-      console.log(line_list[i], match, match_list)
       if (!match && !match_list) {
         new_content.push(line_list[i])
+        normal_line_appear = true
         continue
       }
       if (match) {
         const number = parseInt(match[2])
         const lv = match[1].length/TAB_SPACE_WIDTH
         const last_idx = last_idx_dict[lv] || 0
-        if (last_idx == 9999) {
+        if (last_idx == 9999 && !normal_line_appear) {
           new_content.push(match[1] + "- " + match[3])
           last_idx_dict[lv] = 9999
         }
@@ -630,7 +631,7 @@ const MemoEditor = (props: Props) => {
           new_content.push(line_list[i])
           last_idx_dict[lv] = number
         }
-        else {
+        else if (!normal_line_appear) {
           new_content.push(match[1] + (last_idx + 1).toString() + ". " + match[3])
           last_idx_dict[lv] = last_idx + 1
         }
@@ -643,7 +644,7 @@ const MemoEditor = (props: Props) => {
       else if (match_list) {
         const lv = match_list[1].length/TAB_SPACE_WIDTH
         const last_idx = last_idx_dict[lv]
-        if (last_idx != undefined && last_idx != 9999)
+        if (last_idx != undefined && last_idx != 9999 && !normal_line_appear)
         {
           new_content.push(match_list[1] + (last_idx + 1).toString() + ". " + match_list[3])
           last_idx_dict[lv] = last_idx + 1
@@ -658,6 +659,7 @@ const MemoEditor = (props: Props) => {
           }
         }
       }
+      normal_line_appear = false
     }
     const new_content_str = new_content.join("\n")
     if (new_content_str != content) {

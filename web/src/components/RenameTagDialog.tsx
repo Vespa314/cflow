@@ -59,10 +59,12 @@ const RenameTagDialog: React.FC<Props> = (props: Props) => {
         <div className="w-full flex flex-col justify-start items-start mb-3">
           <div className="relative w-full mb-2 flex flex-row justify-start items-center space-x-2">
             <span className="w-20 text-sm whitespace-nowrap shrink-0 text-right">原标签：</span>
+            <span className="text-gray-500">#</span>
             <Input className="w-full" readOnly disabled type="text" placeholder="A new tag name" size="md" value={tag} />
           </div>
           <div className="relative w-full mb-2 flex flex-row justify-start items-center space-x-2">
             <span className="w-20 text-sm whitespace-nowrap shrink-0 text-right">新标签：</span>
+            <span className="text-gray-500">#</span>
             <Input
               className="w-full"
               type="text"

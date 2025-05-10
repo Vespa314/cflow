@@ -121,6 +121,7 @@ export const useMemoStore = () => {
       const memo = convertResponseModelMemo(data);
       store.dispatch(patchMemo(omit(memo, "pinned")));
       memoCacheStore.setMemoCache(memo);
+      localStorage.removeItem("memo-editor-" + memo.id.toString());
       return memo;
     },
     pinMemo: async (memoId: MemoId) => {

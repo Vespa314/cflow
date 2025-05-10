@@ -23,7 +23,7 @@ const Spoiler: React.FC<Props> = (props: Props) => {
 
     return (
       <span
-        className={classNames("inline cursor-pointer select-none", isRevealed ? "" : "bg-gray-200")}
+        className={classNames("inline cursor-pointer", isRevealed ? "" : "bg-gray-200")}
         onClick={() => setIsRevealed(!isRevealed)}
       >
         <span className={classNames(isRevealed ? "opacity-100" : "opacity-0")}>{parsedContent}</span>

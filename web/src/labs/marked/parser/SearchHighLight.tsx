@@ -1,12 +1,17 @@
 import React, { ReactNode } from 'react';
 
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function highlightText(
     element: string | JSX.Element,
     textQuery: string
   ): JSX.Element {
     const wrapWithColor = (text: string, target: string): ReactNode => {
       if (text.length === 0) return text;
-      const regex = new RegExp(`(${target.toLowerCase()})`, 'gi');
+      const escapedTarget = escapeRegExp(target.toLowerCase());
+      const regex = new RegExp(`(${escapedTarget})`, 'gi');
       const parts = text.split(regex);
       return (
         <>
