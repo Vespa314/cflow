@@ -5,7 +5,7 @@ import { useUserV1Store } from "@/store/v1";
 import { useTranslate } from "@/utils/i18n";
 import { UserSetting } from "@/types/proto/api/v2/user_service";
 import showCreateShortcutDialog from "../CreateShortcutDialog";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ShortcutType } from "./ShortcurType";
 import { showCommonDialog } from "../Dialog/CommonDialog";
 
@@ -20,6 +20,67 @@ const CustomShortcutSection = () => {
     const userV1Store = useUserV1Store();
     const setting = userV1Store.userSetting as UserSetting;
     const [config, setConfig] = useState<ShortcutType[]>(setting.customShortcut?JSON.parse(setting.customShortcut):[]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleExport = () => {
+        const jsonString = JSON.stringify(config, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'custom-shortcuts.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedConfig = JSON.parse(e.target?.result as string);
+                if (Array.isArray(importedConfig)) {
+                    // 检查重复的快捷输入
+                    const existingNames = new Set(config.map(item => item.name));
+                    const duplicates = importedConfig.filter(item => existingNames.has(item.name));
+                    const newItems = importedConfig.filter(item => !existingNames.has(item.name));
+
+                    if (duplicates.length > 0) {
+                        showCommonDialog({
+                            title: "导入快捷输入",
+                            content: `发现 ${duplicates.length} 个重复的快捷输入名称，将跳过这些项。是否继续导入 ${newItems.length} 个新的快捷输入？`,
+                            style: "warning",
+                            dialogName: "import-shortcuts-dialog",
+                            onConfirm: async () => {
+                                const updatedConfig = [...config, ...newItems];
+                                setConfig(updatedConfig);
+                                SaveShortcut(updatedConfig);
+                                toast.success(`成功导入 ${newItems.length} 个快捷输入`);
+                            },
+                        });
+                    } else {
+                        const updatedConfig = [...config, ...importedConfig];
+                        setConfig(updatedConfig);
+                        SaveShortcut(updatedConfig);
+                        toast.success(`成功导入 ${importedConfig.length} 个快捷输入`);
+                    }
+                } else {
+                    toast.error("无效的配置文件格式");
+                }
+            } catch (error) {
+                toast.error("导入失败：无效的JSON文件");
+            }
+            // 重置文件输入框的值，这样下次选择相同文件时也能触发onChange事件
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        };
+        reader.readAsText(file);
+    };
 
     const handleEditShortcut = async (init_shortcut: ShortcutType, idx: number) => {
         showCreateShortcutDialog(
@@ -84,6 +145,22 @@ const CustomShortcutSection = () => {
         });
     }
 
+    const handleMoveUp = (idx: number) => {
+        if (idx === 0) return;
+        const newConfig = [...config];
+        [newConfig[idx], newConfig[idx - 1]] = [newConfig[idx - 1], newConfig[idx]];
+        setConfig(newConfig);
+        SaveShortcut(newConfig);
+    };
+
+    const handleMoveDown = (idx: number) => {
+        if (idx === config.length - 1) return;
+        const newConfig = [...config];
+        [newConfig[idx], newConfig[idx + 1]] = [newConfig[idx + 1], newConfig[idx]];
+        setConfig(newConfig);
+        SaveShortcut(newConfig);
+    };
+
     const handleCreateshortcutDialogConfirm = async (shortcut: ShortcutType, item_idx: number) => {
         const new_config = [...config];
         if (item_idx === -1) {
@@ -98,8 +175,34 @@ const CustomShortcutSection = () => {
     return (
     <>
       <div className="mb-2 w-full flex flex-row justify-between items-center">
-        <p className="title-text !mt-2 !mb-2 flex items-center">自定义快捷输入
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="title-text !mt-2 !mb-2 flex items-center">自定义快捷输入</p>
+          <Button
+            variant="outlined"
+            color="neutral"
+            size="sm"
+            onClick={handleExport}
+          >
+            <Icon.Download className="w-4 h-auto mr-1" />
+            导出
+          </Button>
+          <Button
+            variant="outlined"
+            color="neutral"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Icon.Upload className="w-4 h-auto mr-1" />
+            导入
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".json"
+            onChange={handleImport}
+          />
+        </div>
         <Button
           variant="outlined"
           color="neutral"
@@ -116,13 +219,13 @@ const CustomShortcutSection = () => {
             <table className="min-w-full divide-y divide-gray-300 ">
               <thead>
                 <tr>
-                  <th scope="col" className="px-3 py-2 text-sm font-semibold text-gray-900 ">
+                  <th scope="col" className="px-3 py-2 text-sm font-semibold text-gray-900 text-left">
                     名称
                   </th>
                   <th scope="col" className="px-3 py-2 text-sm font-semibold text-gray-900 text-center">
                     内容
                   </th>
-                  <th scope="col" className="relative px-3 py-2 pr-4 ">
+                  <th scope="col" className="relative px-3 py-2 pr-4 text-right">
                     操作
                   </th>
                 </tr>
@@ -130,15 +233,31 @@ const CustomShortcutSection = () => {
               <tbody className="divide-y divide-gray-200 ">
                 {config.map((shortcut_item, idx) => (
                   <tr key={idx}>
-                    <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900 ">
+                    <td className="whitespace-nowrap px-3 py-2 text-sm text-gray-900 text-left">
                       <div className="flex flex-row items-center">
                         <span>{shortcut_item.name}</span>
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-sm text-gray-900 ">
+                    <td className="px-3 py-2 text-sm text-gray-900 text-center">
                       {shortcut_item.content}
                     </td>
-                    <td className="relative whitespace-nowrap px-3 py-2 text-sm">
+                    <td className="relative whitespace-nowrap px-3 py-2 text-sm text-right">
+                      <IconButton
+                          variant="plain"
+                          size="sm"
+                          onClick={() => handleMoveUp(idx)}
+                          disabled={idx === 0}
+                        >
+                          <Icon.ArrowUp className="w-4 h-auto" />
+                      </IconButton>
+                      <IconButton
+                          variant="plain"
+                          size="sm"
+                          onClick={() => handleMoveDown(idx)}
+                          disabled={idx === config.length - 1}
+                        >
+                          <Icon.ArrowDown className="w-4 h-auto" />
+                      </IconButton>
                       <IconButton
                           variant="plain"
                           size="sm"

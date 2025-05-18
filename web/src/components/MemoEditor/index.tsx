@@ -372,6 +372,10 @@ const MemoEditor = (props: Props) => {
           editorRef.current.insertText(tabSpace);
           editorRef.current.setCursorPosition(cursorPosition + TAB_SPACE_WIDTH);
           return
+        } else {
+          editorRef.current.setCursorPosition(cursorPosition - rowValue.length);
+          editorRef.current.insertText(tabSpace);
+          editorRef.current.setCursorPosition(cursorPosition + TAB_SPACE_WIDTH);
         }
       }
     }
@@ -439,6 +443,13 @@ const MemoEditor = (props: Props) => {
         if (spaces.length >= TAB_SPACE_WIDTH) {
           editorRef.current.removeText(cursorPosition - rowValue.length, TAB_SPACE_WIDTH);
           editorRef.current.setCursorPosition(cursorPosition - TAB_SPACE_WIDTH);
+        }
+      } else {
+        const space_before = cur_line_content.match(/^( *)/);
+        const space_cnt = space_before ? space_before[1].length : 0;
+        const del_space_number = Math.min(4, space_cnt);
+        if (del_space_number) {
+          editorRef.current.removeText(cursorPosition - rowValue.length, del_space_number);
         }
       }
     }
@@ -602,12 +613,15 @@ const MemoEditor = (props: Props) => {
     const line_list = content.split("\n")
     let last_idx_dict : { [key: number]: number } = {}
     let normal_line_appear = false
-    let last_lv = 0
     const number_regexp = /^( *)(\d+)\. (.*)$/
     const list_regexp = /^( *)([-\*]) (.*)$/
 
     let cursor_line = editorRef.current?.getCursorLineNumber();
     if (cursor_line == null) {
+      return
+    }
+    let cursorPosition = editorRef.current?.getCursorPosition();
+    if (cursorPosition == null) {
       return
     }
 
@@ -626,6 +640,9 @@ const MemoEditor = (props: Props) => {
         if (last_idx == 9999 && !normal_line_appear) {
           new_content.push(match[1] + "- " + match[3])
           last_idx_dict[lv] = 9999
+          if (i <= cursor_line) {
+            cursorPosition -= number.toString().length
+          }
         }
         else if (number == last_idx + 1 || number == 1) {
           new_content.push(line_list[i])
@@ -634,20 +651,31 @@ const MemoEditor = (props: Props) => {
         else if (!normal_line_appear) {
           new_content.push(match[1] + (last_idx + 1).toString() + ". " + match[3])
           last_idx_dict[lv] = last_idx + 1
+          if (i <= cursor_line) {
+            cursorPosition += (last_idx + 1).toString().length - number.toString().length
+          }
+        } else {
+          new_content.push(match[1] +  "1. " + match[3])
+          last_idx_dict[lv] = 1
+          if (i <= cursor_line) {
+            cursorPosition += 1 - number.toString().length
+          }
         }
         for (let key in last_idx_dict) {
           if (parseInt(key) > lv) {
             delete last_idx_dict[key]
           }
         }
-      }
-      else if (match_list) {
+      } else if (match_list) {
         const lv = match_list[1].length/TAB_SPACE_WIDTH
         const last_idx = last_idx_dict[lv]
         if (last_idx != undefined && last_idx != 9999 && !normal_line_appear)
         {
           new_content.push(match_list[1] + (last_idx + 1).toString() + ". " + match_list[3])
           last_idx_dict[lv] = last_idx + 1
+          if (i <= cursor_line) {
+            cursorPosition += (last_idx + 1).toString().length
+          }
         }
         else {
           new_content.push(line_list[i])
@@ -664,6 +692,7 @@ const MemoEditor = (props: Props) => {
     const new_content_str = new_content.join("\n")
     if (new_content_str != content) {
       editorRef.current?.setContent(new_content_str)
+      editorRef.current?.setCursorPosition(cursorPosition);
     }
   }
 

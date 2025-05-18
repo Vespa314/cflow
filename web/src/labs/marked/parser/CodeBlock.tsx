@@ -3,7 +3,7 @@ import hljs from "highlight.js";
 import { matcher } from "../matcher";
 import MermaidBlock from "./MermaidBlock";
 
-export const CODE_BLOCK_REG = /^```(\S*?)\s([\s\S]*?)```/;
+export const CODE_BLOCK_REG = /^```(\S*?)\s([\s\S]*?\n)```/;
 const MERMAID_LANGUAGE = "mermaid";
 
 const renderer = (rawStr: string) => {
