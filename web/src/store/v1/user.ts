@@ -34,6 +34,9 @@ const getDefaultUserSetting = () => {
     customCardStyle: "",
     doubleClickEdit: true,
     useExcalidraw: false,
+    hideMarkBlock: false,
+    hideFullScreen: false,
+    sysShortcutConfig: "todo,code,table,add_col,add_row",
   });
 };
 

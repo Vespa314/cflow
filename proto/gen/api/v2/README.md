@@ -627,6 +627,9 @@
 | custom_card_style | [string](#string) |  | custom card style |
 | double_click_edit | [bool](#bool) |  | double click edit |
 | use_excalidraw | [bool](#bool) |  | use excalidraw |
+| hide_mark_block | [bool](#bool) |  | hide mark block |
+| hide_full_screen | [bool](#bool) |  | hide full screen |
+| sys_shortcut_config | [string](#string) |  | sys shortcut config |
 
 
 

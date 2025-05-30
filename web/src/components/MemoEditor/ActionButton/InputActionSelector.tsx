@@ -20,13 +20,18 @@ const InputActionSelector = (props: Props) => {
   const { fullScreen, onActionSelectorClick } = props;
   const userV1Store = useUserV1Store();
   const userSetting = userV1Store.userSetting as UserSetting;
+
+  // 获取启用的系统快捷键配置
+  const sysShortcutConfig = userSetting.sysShortcutConfig == undefined ? "todo,code,table,add_col,add_row" : userSetting.sysShortcutConfig;
+  const enabledSystemShortcuts = new Set(sysShortcutConfig.split(',').map(key => key.trim()));
+
   const action_list = [
-    { name: "待办", action: "checkbox", icon: "CheckSquare", tips: "todo list"},
-    { name: "代码块", action: "code", icon: "Code", tips: "代码"},
-    { name: "新建表格", action: "add_table", icon: "Table", tips: "输入表格"},
-    { name: "表格加一列", action: "add_col", icon: "ArrowRightToLine", tips: "表格增加一列"},
-    { name: "表格加一行", action: "add_row", icon: "ArrowDownToLine", tips: "表格增加一行"},
-  ];
+    { name: "待办", action: "checkbox", icon: "CheckSquare", tips: "todo list", configKey: "todo"},
+    { name: "代码块", action: "code", icon: "Code", tips: "代码", configKey: "code"},
+    { name: "新建表格", action: "add_table", icon: "Table", tips: "输入表格", configKey: "table"},
+    { name: "表格加一列", action: "add_col", icon: "ArrowRightToLine", tips: "表格增加一列", configKey: "add_col"},
+    { name: "表格加一行", action: "add_row", icon: "ArrowDownToLine", tips: "表格增加一行", configKey: "add_row"},
+  ].filter(item => enabledSystemShortcuts.has(item.configKey)); // 只显示启用的系统快捷键
 
   let custom_shortcut = []
   if (userSetting?.customShortcut) {
@@ -43,6 +48,7 @@ const InputActionSelector = (props: Props) => {
         action: `custom_shortcut_${custom_shortcut[i]['content']}`,
         icon: custom_shortcut[i]['icon'] || "User",
         tips: custom_shortcut[i]['tips'] || custom_shortcut[i]['content'],
+        configKey: '', // 自定义快捷键不需要configKey
       });
     }
   }

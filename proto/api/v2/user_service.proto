@@ -171,6 +171,12 @@ message UserSetting {
   bool double_click_edit = 16;
   // use excalidraw
   bool use_excalidraw = 17;
+  // hide mark block
+  bool hide_mark_block = 18;
+  // hide full screen
+  bool hide_full_screen = 19;
+  // sys shortcut config
+  string sys_shortcut_config = 20;
 }
 
 message GetUserSettingRequest {

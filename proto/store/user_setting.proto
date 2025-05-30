@@ -27,6 +27,9 @@ message UserSetting {
     string custom_card_style = 17;
     bool double_click_edit = 18;
     bool use_excalidraw = 19;
+    bool hide_mark_block = 20;
+    bool hide_full_screen = 21;
+    string sys_shortcut_config = 22;
   }
 }
 
@@ -49,6 +52,9 @@ enum UserSettingKey {
   USER_SETTING_CUSTOM_CARD_STYLE = 15;
   USER_SETTING_DOUBLE_CLICK_EDIT = 16;
   USER_SETTING_USE_EXCALIDRAW = 17;
+  USER_SETTING_HIDE_MARK_BLOCK = 18;
+  USER_SETTING_HIDE_FULL_SCREEN = 19;
+  USER_SETTING_SYS_SHORTCUT_CONFIG = 20;
 }
 
 message AccessTokensUserSetting {

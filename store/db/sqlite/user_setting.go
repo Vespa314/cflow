@@ -74,6 +74,14 @@ func (d *DB) UpsertUserSetting(ctx context.Context, upsert *storepb.UserSetting)
 	} else if upsert.Key == storepb.UserSettingKey_USER_SETTING_USE_EXCALIDRAW {
 		valueBool = upsert.GetUseExcalidraw()
 		is_bool = true
+	} else if upsert.Key == storepb.UserSettingKey_USER_SETTING_HIDE_MARK_BLOCK {
+		valueBool = upsert.GetHideMarkBlock()
+		is_bool = true
+	} else if upsert.Key == storepb.UserSettingKey_USER_SETTING_HIDE_FULL_SCREEN {
+		valueBool = upsert.GetHideFullScreen()
+		is_bool = true
+	} else if upsert.Key == storepb.UserSettingKey_USER_SETTING_SYS_SHORTCUT_CONFIG {
+		valueString = upsert.GetSysShortcutConfig()
 	} else {
 		return nil, errors.Errorf("unknown user setting key: %s", upsert.Key.String())
 	}
@@ -202,6 +210,18 @@ func (d *DB) ListUserSettings(ctx context.Context, find *store.FindUserSetting) 
 		} else if userSetting.Key == storepb.UserSettingKey_USER_SETTING_USE_EXCALIDRAW {
 			userSetting.Value = &storepb.UserSetting_UseExcalidraw{
 				UseExcalidraw: valueString == "1",
+			}
+		} else if userSetting.Key == storepb.UserSettingKey_USER_SETTING_HIDE_MARK_BLOCK {
+			userSetting.Value = &storepb.UserSetting_HideMarkBlock{
+				HideMarkBlock: valueString == "1",
+			}
+		} else if userSetting.Key == storepb.UserSettingKey_USER_SETTING_HIDE_FULL_SCREEN {
+			userSetting.Value = &storepb.UserSetting_HideFullScreen{
+				HideFullScreen: valueString == "1",
+			}
+		} else if userSetting.Key == storepb.UserSettingKey_USER_SETTING_SYS_SHORTCUT_CONFIG {
+			userSetting.Value = &storepb.UserSetting_SysShortcutConfig{
+				SysShortcutConfig: valueString,
 			}
 		} else {
 			// Skip unknown user setting key.

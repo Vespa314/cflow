@@ -282,6 +282,9 @@
 | custom_card_style | [string](#string) |  |  |
 | double_click_edit | [bool](#bool) |  |  |
 | use_excalidraw | [bool](#bool) |  |  |
+| hide_mark_block | [bool](#bool) |  |  |
+| hide_full_screen | [bool](#bool) |  |  |
+| sys_shortcut_config | [string](#string) |  |  |
 
 
 
@@ -315,6 +318,9 @@
 | USER_SETTING_CUSTOM_CARD_STYLE | 15 |  |
 | USER_SETTING_DOUBLE_CLICK_EDIT | 16 |  |
 | USER_SETTING_USE_EXCALIDRAW | 17 |  |
+| USER_SETTING_HIDE_MARK_BLOCK | 18 |  |
+| USER_SETTING_HIDE_FULL_SCREEN | 19 |  |
+| USER_SETTING_SYS_SHORTCUT_CONFIG | 20 |  |
 
 
  

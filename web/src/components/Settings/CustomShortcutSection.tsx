@@ -5,20 +5,17 @@ import { useUserV1Store } from "@/store/v1";
 import { useTranslate } from "@/utils/i18n";
 import { UserSetting } from "@/types/proto/api/v2/user_service";
 import showCreateShortcutDialog from "../CreateShortcutDialog";
+import showSystemShortcutConfigDialog from "../SystemShortcutConfigDialog";
 import { useState, useRef } from "react";
 import { ShortcutType } from "./ShortcurType";
 import { showCommonDialog } from "../Dialog/CommonDialog";
-
-const CustomIcon = ({ name }: { name: string }) => {
-  const LucideIcon = (Icon.icons as { [key: string]: any })[name];
-  return <LucideIcon className="w-4 h-auto mr-2" />;
-};
 
 
 const CustomShortcutSection = () => {
     const t = useTranslate();
     const userV1Store = useUserV1Store();
     const setting = userV1Store.userSetting as UserSetting;
+    const [sysShortcutConfig, setSysShortcutConfig] = useState<string>(setting.sysShortcutConfig==undefined ? "todo,code,table,add_col,add_row" : setting.sysShortcutConfig);
     const [config, setConfig] = useState<ShortcutType[]>(setting.customShortcut?JSON.parse(setting.customShortcut):[]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,6 +158,27 @@ const CustomShortcutSection = () => {
         SaveShortcut(newConfig);
     };
 
+    const handleSysShortcutConfig = () => {
+        showSystemShortcutConfigDialog(
+            sysShortcutConfig,
+            async (newConfig: string) => {
+                try {
+                    await userV1Store.updateUserSetting(
+                        {
+                            sysShortcutConfig: newConfig,
+                        },
+                        ["sys_shortcut_config"]
+                    );
+                    setSysShortcutConfig(newConfig);
+                    toast.success("系统快捷键配置保存成功");
+                } catch (error: any) {
+                    console.error(error);
+                    toast.error(error.response?.data?.message || "保存失败");
+                }
+            }
+        );
+    }
+
     const handleCreateshortcutDialogConfirm = async (shortcut: ShortcutType, item_idx: number) => {
         const new_config = [...config];
         if (item_idx === -1) {
@@ -177,6 +195,7 @@ const CustomShortcutSection = () => {
       <div className="mb-2 w-full flex flex-row justify-between items-center">
         <div className="flex items-center gap-2">
           <p className="title-text !mt-2 !mb-2 flex items-center">自定义快捷输入</p>
+          <Icon.Settings className="w-4 h-auto mr-1 cursor-pointer" onClick={handleSysShortcutConfig}/>
           <Button
             variant="outlined"
             color="neutral"

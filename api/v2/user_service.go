@@ -189,22 +189,25 @@ func (s *APIV2Service) DeleteUser(ctx context.Context, request *apiv2pb.DeleteUs
 
 func getDefaultUserSetting() *apiv2pb.UserSetting {
 	return &apiv2pb.UserSetting{
-		Locale:          "zh-Hans",
-		Appearance:      "system",
-		MemoVisibility:  "PRIVATE",
-		ShowWordCnt:     true,
-		MarkWithTag:     false,
-		CustomShortcut:  "",
-		FavTag:          "",
-		RefPreview:      true,
-		ShowTodoPage:    true,
-		ShowArchivePage: true,
-		PasteRename:     false,
-		ShowTagSelector: true,
-		ShowMemoPublic:  false,
-		CustomCardStyle: "",
-		DoubleClickEdit: true,
-		UseExcalidraw:   false,
+		Locale:            "zh-Hans",
+		Appearance:        "system",
+		MemoVisibility:    "PRIVATE",
+		ShowWordCnt:       true,
+		MarkWithTag:       false,
+		CustomShortcut:    "",
+		FavTag:            "",
+		RefPreview:        true,
+		ShowTodoPage:      true,
+		ShowArchivePage:   true,
+		PasteRename:       false,
+		ShowTagSelector:   true,
+		ShowMemoPublic:    false,
+		CustomCardStyle:   "",
+		DoubleClickEdit:   true,
+		UseExcalidraw:     false,
+		HideMarkBlock:     false,
+		HideFullScreen:    false,
+		SysShortcutConfig: "todo,code,table,add_col,add_row",
 	}
 }
 
@@ -254,6 +257,12 @@ func (s *APIV2Service) GetUserSetting(ctx context.Context, _ *apiv2pb.GetUserSet
 			userSettingMessage.DoubleClickEdit = setting.GetDoubleClickEdit()
 		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_USE_EXCALIDRAW {
 			userSettingMessage.UseExcalidraw = setting.GetUseExcalidraw()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_HIDE_MARK_BLOCK {
+			userSettingMessage.HideMarkBlock = setting.GetHideMarkBlock()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_HIDE_FULL_SCREEN {
+			userSettingMessage.HideFullScreen = setting.GetHideFullScreen()
+		} else if setting.Key == storepb.UserSettingKey_USER_SETTING_SYS_SHORTCUT_CONFIG {
+			userSettingMessage.SysShortcutConfig = setting.GetSysShortcutConfig()
 		}
 	}
 	return &apiv2pb.GetUserSettingResponse{
@@ -428,6 +437,36 @@ func (s *APIV2Service) UpdateUserSetting(ctx context.Context, request *apiv2pb.U
 				Key:    storepb.UserSettingKey_USER_SETTING_USE_EXCALIDRAW,
 				Value: &storepb.UserSetting_UseExcalidraw{
 					UseExcalidraw: request.Setting.UseExcalidraw,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "hide_mark_block" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_HIDE_MARK_BLOCK,
+				Value: &storepb.UserSetting_HideMarkBlock{
+					HideMarkBlock: request.Setting.HideMarkBlock,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "hide_full_screen" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_HIDE_FULL_SCREEN,
+				Value: &storepb.UserSetting_HideFullScreen{
+					HideFullScreen: request.Setting.HideFullScreen,
+				},
+			}); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)
+			}
+		} else if field == "sys_shortcut_config" {
+			if _, err := s.Store.UpsertUserSettingV1(ctx, &storepb.UserSetting{
+				UserId: user.ID,
+				Key:    storepb.UserSettingKey_USER_SETTING_SYS_SHORTCUT_CONFIG,
+				Value: &storepb.UserSetting_SysShortcutConfig{
+					SysShortcutConfig: request.Setting.SysShortcutConfig,
 				},
 			}); err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to upsert user setting: %v", err)

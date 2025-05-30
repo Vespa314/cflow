@@ -157,6 +157,8 @@ const MemoEditor = (props: Props) => {
   const paste_file_rename = userSetting?.pasteRename ?? false;
   const show_tag_selector = userSetting?.showTagSelector ?? true;
   const show_memo_public = userSetting?.showMemoPublic ?? false;
+  const hide_mark_block = userSetting?.hideMarkBlock ?? false;
+  const hide_full_screen = userSetting?.hideFullScreen ?? false;
 
   const [word_cnt, set_word_cnt] = useState(0);
   const show_word_cnt = userSetting.showWordCnt;
@@ -821,7 +823,8 @@ const MemoEditor = (props: Props) => {
       };
     });
 
-    const matchedNodes = getMatchedNodes(content);
+    const no_code_block_content = content.replace(/```.*?```/gs, "");
+    const matchedNodes = getMatchedNodes(no_code_block_content);
     const tagNameList = uniq(matchedNodes.filter((node) => node.parserName === "tag").map((node) => node.matchedContent.slice(1)));
     for (const tagName of tagNameList) {
       await tagStore.upsertTag(tagName);
@@ -1129,9 +1132,9 @@ const MemoEditor = (props: Props) => {
       <div className="relative w-full flex flex-row justify-between items-center pt-2 z-1">
         <div className="flex flex-row justify-start items-center">
           {show_tag_selector && <TagSelector onTagSelectorClick={(tag) => handleTagSelectorClick(tag)} fullScreen={state.fullscreen}/>}
-          <IconButton className="flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow">
+          {!hide_mark_block && <IconButton className="flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow">
             <Icon.Link className="w-5 h-5 mx-auto" onClick={handleMarkBtnClick}/>
-          </IconButton>
+          </IconButton>}
           <IconButton className="md:!hidden flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow">
             <Icon.ArrowRightFromLine className="w-5 h-5 mx-auto" onClick={handleIndent}/>
           </IconButton>
@@ -1153,15 +1156,15 @@ const MemoEditor = (props: Props) => {
             })
           }
           <InputActionSelector onActionSelectorClick={(action) => handleInputActionClick(action)} fullScreen={state.fullscreen} />
-          <IconButton className="flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow" >
+          <IconButton className="cflow_upload_icon flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow" >
             <Icon.Image className="w-5 h-5 mx-auto" onClick={handleUploadFileBtnClick} />
           </IconButton>
           {use_excalidraw && <IconButton className="flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer text-gray-600 hover:bg-gray-300 hover:shadow" >
             <Icon.Spline className="w-5 h-5 mx-auto" onClick={handleExcalidrawClick} />
           </IconButton>}
-          <IconButton className="action-btn">
+          {!hide_full_screen && <IconButton className="action-btn">
             {state.fullscreen ? <Icon.Minimize className="w-5 h-5 mx-auto"  onClick={handleFullscreenBtnClick}/> : <Icon.Maximize className="w-5 h-5 mx-auto"  onClick={handleFullscreenBtnClick}/>}
-          </IconButton>
+          </IconButton>}
           {has_modify && (
             <>
               <IconButton className={`flex flex-row justify-center items-center p-1 w-auto h-auto mr-1 select-none rounded cursor-pointer hover:bg-gray-300 hover:shadow ${!has_modify ? 'hidden' : ''}`} style={{ color: "#CC0000" }} >

@@ -137,6 +137,24 @@ const PreferencesSection = () => {
     );
   }
 
+  const handleHideMarkBlockChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        hideMarkBlock: event.target.checked,
+      },
+      ["hide_mark_block"]
+    );
+  }
+
+  const handleHideFullScreenChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await userV1Store.updateUserSetting(
+      {
+        hideFullScreen: event.target.checked,
+      },
+      ["hide_full_screen"]
+    );
+  }
+
   return (
     <div className="section-container preferences-section-container">
       <p className="title-text">{t("common.basic")}</p>
@@ -183,6 +201,14 @@ const PreferencesSection = () => {
       <label className="form-label selector">
         <span className="text-sm break-keep">显示标签选择器</span>
         <Switch className="ml-2" checked={setting.showTagSelector} onChange={handleShowTagSelectorChanged} />
+      </label>
+      <label className="form-label selector">
+        <span className="text-sm break-keep">隐藏引用按钮</span>
+        <Switch className="ml-2" checked={setting.hideMarkBlock} onChange={handleHideMarkBlockChanged} />
+      </label>
+      <label className="form-label selector">
+        <span className="text-sm break-keep">隐藏全屏按钮</span>
+        <Switch className="ml-2" checked={setting.hideFullScreen} onChange={handleHideFullScreenChanged} />
       </label>
       <label className="form-label selector">
         <span className="text-sm break-keep">显示卡片公开入口</span>
