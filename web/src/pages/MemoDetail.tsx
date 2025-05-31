@@ -19,6 +19,7 @@ import { useUserV1Store, extractUsernameFromName } from "@/store/v1";
 import { User } from "@/types/proto/api/v2/user_service";
 import { useTranslate } from "@/utils/i18n";
 import { UserSetting } from "@/types/proto/api/v2/user_service";
+import showPreviewImageDialog from "@/components/PreviewImageDialog";
 
 const MemoDetail = () => {
   const t = useTranslate();
@@ -141,6 +142,11 @@ const MemoDetail = () => {
           });
           break;
         }
+      }
+    } else if (targetEl.tagName === "IMG") {
+      const imgUrl = targetEl.getAttribute("src");
+      if (imgUrl) {
+        showPreviewImageDialog([imgUrl], 0);
       }
     }
   };

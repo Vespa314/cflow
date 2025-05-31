@@ -3,8 +3,7 @@ import { marked } from "..";
 import { matcher } from "../matcher";
 import Icon from "../../../components/Icon";
 import { useState } from "react";
-export const DISCLOSURE_BLOCK_REG = /^%%%([^\n]*)\n([\s\S]*?\n)%%%$/;
-
+export const DISCLOSURE_BLOCK_REG = /^%%%([^\n]*)\n([\s\S]*?\n?)%%%(?=\n|$)/;
 
 interface Props {
   rawStr: string;
