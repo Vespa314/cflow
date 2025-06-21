@@ -28,7 +28,7 @@
     "katex": "^0.16.7",
     "lodash-es": "^4.17.21",
     "long": "^5.2.3",
-    "lucide-react": "^0.309.0",
+    "lucide-react": "^0.522.0",
     "mermaid": "^10.9.1",
     "nice-grpc-web": "^3.3.2",
     "protobufjs": "^7.2.5",

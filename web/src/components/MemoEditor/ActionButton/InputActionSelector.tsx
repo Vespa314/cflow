@@ -12,6 +12,10 @@ interface Props {
 
 const CustomIcon = ({ name }: { name: string }) => {
   const LucideIcon = (Icon.icons as { [key: string]: any })[name];
+  if (!LucideIcon) {
+      console.error(`Icon with name "${name}" does not exist.`);
+      return null;
+  }
   return <LucideIcon className="w-4 h-auto mr-2" />;
 };
 

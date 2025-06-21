@@ -34,7 +34,11 @@ const orderItemReg = /^( *)(\d+)\. (.*)/;
 
 const CustomIcon = ({ name }: { name: string }) => {
   const LucideIcon = (Icon.icons as { [key: string]: any })[name];
-  return <LucideIcon className="w-5 h-5 mx-auto" />;
+  if (!LucideIcon) {
+      console.error(`Icon with name "${name}" does not exist.`);
+      return null;
+  }
+  return <LucideIcon className="w-4 h-auto mr-2" />;
 };
 
 const cal_valid_word_cnt = (content: string) => {
@@ -615,8 +619,10 @@ const MemoEditor = (props: Props) => {
     const line_list = content.split("\n")
     let last_idx_dict : { [key: number]: number } = {}
     let normal_line_appear = false
+    let code_block_appear = false
     const number_regexp = /^( *)(\d+)\. (.*)$/
     const list_regexp = /^( *)([-\*]) (.*)$/
+    const code_block_regexp = /^( *)(```)(.*)$/
 
     let cursor_line = editorRef.current?.getCursorLineNumber();
     if (cursor_line == null) {
@@ -628,6 +634,14 @@ const MemoEditor = (props: Props) => {
     }
 
     for (let i = 0; i < line_list.length; i++) {
+      const match_code_block = line_list[i].match(code_block_regexp)
+      if (match_code_block) {
+        code_block_appear = !code_block_appear
+      }
+      if (code_block_appear) {
+        new_content.push(line_list[i])
+        continue
+      }
       const match = line_list[i].match(number_regexp)
       const match_list = line_list[i].match(list_regexp)
       if (!match && !match_list) {
@@ -1054,6 +1068,9 @@ const MemoEditor = (props: Props) => {
       else {
         shortcut = "\n" + shortcut.slice(1);
       }
+    }
+    if (shortcut.startsWith("\\^")) {
+      shortcut = shortcut.slice(1);
     }
     if (shortcut.includes("$CURSOR$")) {
       const cursor_pos = shortcut.indexOf("$CURSOR$")
