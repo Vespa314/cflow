@@ -64,6 +64,7 @@ const CreateExcalidrawDialog: React.FC<Props> = (props: Props) => {
         initialData={{
           elements: cache || [],
         }}
+        langCode="zh-CN"
         renderTopRightUI={() => {
           return (
             <>
@@ -86,6 +87,7 @@ const CreateExcalidrawDialog: React.FC<Props> = (props: Props) => {
           <MainMenu.DefaultItems.LoadScene />
           <MainMenu.DefaultItems.Export />
           <MainMenu.DefaultItems.SaveAsImage />
+          <MainMenu.DefaultItems.ToggleTheme />
         </MainMenu>
       </Excalidraw>
     </div>
