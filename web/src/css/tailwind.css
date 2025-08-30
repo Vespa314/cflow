@@ -17,6 +17,9 @@
     overflow-wrap: anywhere;
     word-break: normal;
   }
+  .strikethrough {
+  text-decoration: line-through;
+  }
 }
 
 @layer components {
